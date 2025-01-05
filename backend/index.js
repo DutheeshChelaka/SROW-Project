@@ -1,13 +1,22 @@
 const express = require("express");
 const connectDB = require("./config/db");
-const app = express();
 const cors = require("cors");
 require("dotenv").config();
 
-connectDB();
-
+const app = express();
 app.use(cors());
 app.use(express.json());
+
+connectDB();
+
+// Routes
+app.use("/api/auth", require("./routes/authRoutes"));
+
+// Protected Route Example
+const authMiddleware = require("./middleware/authMiddleware");
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({ message: `Welcome user ${req.user.id}` });
+});
 
 app.get("/", (req, res) => {
   res.send("Backend is running!!!");
