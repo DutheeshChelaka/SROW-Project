@@ -1,4 +1,3 @@
-// src/pages/Signup.jsx
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -30,12 +29,14 @@ const Signup = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h2>Sign Up</h2>
       <form onSubmit={handleSubmit}>
         <input
           name="name"
+          type="text"
           placeholder="Name"
+          value={formData.name}
           onChange={handleChange}
           required
         />
@@ -43,6 +44,7 @@ const Signup = () => {
           name="email"
           type="email"
           placeholder="Email"
+          value={formData.email}
           onChange={handleChange}
           required
         />
@@ -50,6 +52,7 @@ const Signup = () => {
           name="password"
           type="password"
           placeholder="Password"
+          value={formData.password}
           onChange={handleChange}
           required
         />

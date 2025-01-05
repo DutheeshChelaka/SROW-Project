@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -25,13 +24,14 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h2>Login</h2>
       <form onSubmit={handleSubmit}>
         <input
           name="email"
           type="email"
           placeholder="Email"
+          value={formData.email}
           onChange={handleChange}
           required
         />
@@ -39,6 +39,7 @@ const Login = () => {
           name="password"
           type="password"
           placeholder="Password"
+          value={formData.password}
           onChange={handleChange}
           required
         />
