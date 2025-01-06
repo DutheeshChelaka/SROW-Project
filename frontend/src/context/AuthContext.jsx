@@ -1,5 +1,4 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
@@ -12,19 +11,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decoded = jwtDecode(token);
-      setUser(decoded);
+      try {
+        const decoded = jwtDecode(token);
+        console.log("Decoded Token:", decoded); // Debugging
+        setUser(decoded);
+      } catch (error) {
+        console.error("Error decoding token", error);
+        localStorage.removeItem("token");
+      }
     }
     setLoading(false);
   }, []);
-
   const login = async (email, password) => {
     const res = await axios.post("http://localhost:5000/api/auth/login", {
       email,
       password,
     });
-    localStorage.setItem("token", res.data.token);
-    setUser(jwtDecode(res.data.token));
+    const token = res.data.token;
+    localStorage.setItem("token", token);
+    const decoded = jwtDecode(token); // Decode token to extract user details
+    setUser(decoded); // Set user details in state
   };
 
   const signup = async (name, email, password) => {
@@ -45,4 +51,13 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook for using AuthContext
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

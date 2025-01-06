@@ -11,6 +11,8 @@ import Login from "./pages/login";
 import HomePage from "./pages/home";
 import AboutPage from "./pages/about";
 import Layout from "./components/Layout";
+import Profile from "./pages/profile";
+import ProtectedRoute from "./components/ProtectedRoutes";
 
 function App() {
   return (
@@ -23,6 +25,18 @@ function App() {
           {/* Routes without Header */}
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Protected Route */}
+          <Route
+            path="/profile"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
 
           {/* Routes with Header */}
           <Route

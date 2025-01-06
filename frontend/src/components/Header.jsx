@@ -1,13 +1,27 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import "./Header.css";
 
 const Header = () => {
   const [selectedCountry, setSelectedCountry] = useState("Sri Lanka");
   const [currency, setCurrency] = useState("LKR");
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const handleCountryChange = (country) => {
     setSelectedCountry(country);
     setCurrency(country === "Sri Lanka" ? "LKR" : "CNY");
+  };
+
+  const handleProfileClick = () => {
+    if (user) {
+      navigate("/profile"); // Redirect to profile if logged in
+    } else {
+      navigate("/login"); // Redirect to login/signup if not logged in
+    }
   };
 
   return (
@@ -35,7 +49,9 @@ const Header = () => {
 
         {/* Logo */}
         <div className="logo-container">
-          <img src="logo/Logo.png" alt="SROW Logo" className="logo-image" />
+          <Link to="/home">
+            <img src="logo/Logo.png" alt="SROW Logo" className="logo-image" />
+          </Link>
         </div>
 
         {/* Navigation Icons */}
@@ -46,8 +62,8 @@ const Header = () => {
           <a href="#" className="icon">
             <i className="fas fa-search"></i> {/* Search Icon */}
           </a>
-          <a href="#" className="icon">
-            <i className="fas fa-user"></i> {/* User Icon */}
+          <a onClick={handleProfileClick} className="icon">
+            <i className="fas fa-user"></i> {/* User Profile Icon */}
           </a>
           <a href="#" className="icon">
             <i className="fas fa-shopping-cart"></i> {/* Cart Icon */}

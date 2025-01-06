@@ -6,7 +6,6 @@ const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 
 // @route   POST /api/auth/signup
-// @desc    Register a new user
 router.post(
   "/signup",
   [
@@ -41,7 +40,14 @@ router.post(
 
       await user.save();
 
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      // Include name and email in the JWT payload
+      const payload = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
 
@@ -54,7 +60,6 @@ router.post(
 );
 
 // @route   POST /api/auth/login
-// @desc    Authenticate user & get token
 router.post(
   "/login",
   [
@@ -80,7 +85,14 @@ router.post(
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      // Include name and email in the JWT payload
+      const payload = {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
         expiresIn: "1h",
       });
 

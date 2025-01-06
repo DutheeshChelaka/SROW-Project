@@ -1,10 +1,10 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import "../App.css";
+import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -14,12 +14,15 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       await login(formData.email, formData.password);
-      navigate("/");
+      navigate("/profile"); // Redirect to profile after successful login
     } catch (err) {
       console.error(err);
-      alert("Login failed");
+      alert("Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,8 +46,15 @@ const Login = () => {
           onChange={handleChange}
           required
         />
-        <button type="submit">Login</button>
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging In..." : "Login"}
+        </button>
       </form>
+      <div>
+        <p>
+          Don't have an account? <Link to="/signup">Sign up here</Link>
+        </p>
+      </div>
     </div>
   );
 };
