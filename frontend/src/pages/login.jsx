@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import "../App.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -18,11 +19,13 @@ const Login = () => {
     try {
       await login(formData.email, formData.password);
       navigate("/profile"); // Redirect to profile after successful login
+    
     } catch (err) {
       console.error(err);
       alert("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
+      alert("Login failed");
     }
   };
 
@@ -47,8 +50,9 @@ const Login = () => {
           required
         />
         <button type="submit" disabled={loading}>
-          {loading ? "Logging In..." : "Login"}
+        {loading ? "Logging In..." : "Login"}
         </button>
+        <button type="submit">Login</button>
       </form>
       <div>
         <p>
