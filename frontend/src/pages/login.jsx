@@ -1,7 +1,6 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import "../App.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -50,9 +49,8 @@ const Login = () => {
           required
         />
         <button type="submit" disabled={loading}>
-        {loading ? "Logging In..." : "Login"}
+          {loading ? "Logging In..." : "Login"}
         </button>
-        <button type="submit">Login</button>
       </form>
       <div>
         <p>
