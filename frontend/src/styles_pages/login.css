@@ -1,0 +1,116 @@
+/* General styles for login page */
+@import url("https://fonts.googleapis.com/css2?family=Italiana&display=swap");
+
+body {
+  margin: 0;
+  font-family: "Arial", sans-serif;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-header {
+  display: flex;
+  flex-direction: row;
+  text-align: center;
+  margin-bottom: 30px;
+  align-items: center;
+}
+
+.login-logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 10px;
+  margin-top: 40px;
+  margin-right: 20px;
+}
+
+.login-title {
+  font-family: "Italiana", serif;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-top: 30px;
+  color: #ffffff;
+}
+
+.login-form-container {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 90px;
+  padding-bottom: 100px;
+  margin-bottom: 150px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.login-form-container h2 {
+  font-size: 2rem;
+  margin-bottom: 40px;
+  margin-top: 5px;
+  color: #333;
+}
+
+.login-form-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.login-form-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.login-form-container input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.login-form-container button {
+  padding: 10px 20px;
+  background-color: #000000;
+  color: #fff;
+  border: none;
+  border-radius: 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-form-container button:hover {
+  background-color: #414141;
+}
+
+.login-form-container button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.signup-link {
+  margin-top: 20px;
+
+  font-size: 0.9rem;
+  color: #000000;
+}
+
+.signup-link a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
