@@ -25,7 +25,7 @@ const Login = () => {
       alert("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
-      alert("Login failed");
+      alert("Login succesfull");
     }
   };
 
