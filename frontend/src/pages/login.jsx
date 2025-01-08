@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles_pages/login.css";
@@ -6,7 +6,7 @@ import "../styles_pages/login.css";
 const Login = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const { login } = useContext(AuthContext);
+  const { login, user } = useContext(AuthContext); // Access user details
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,8 +17,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
-      navigate("/profile"); // Redirect to profile after successful login
+      await login(formData.email, formData.password); // Log the user in
     } catch (err) {
       console.error(err);
       alert("Login failed. Please check your credentials.");
@@ -26,6 +25,17 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  // Redirect based on the role after the user state updates
+  useEffect(() => {
+    if (user) {
+      if (user.role === "admin") {
+        navigate("/admin"); // Redirect to admin dashboard
+      } else {
+        navigate("/profile"); // Redirect to user profile
+      }
+    }
+  }, [user, navigate]); // Listen for changes in `user`
 
   return (
     <div className="login-container">
@@ -56,7 +66,12 @@ const Login = () => {
             {loading ? "Logging In..." : "Login"}
           </button>
         </form>
-        <div className="signup-link">
+        <div className="login-links">
+          <p>
+            <Link to="/forgot-password" className="forgot-password-link">
+              Forgot Password?
+            </Link>
+          </p>
           <p>
             Don't have an account? <Link to="/signup">Sign up here</Link>
           </p>

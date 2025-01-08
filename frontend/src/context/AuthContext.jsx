@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode"; // Correct import
 
 export const AuthContext = createContext();
 
@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
     }
     setLoading(false);
   }, []);
+
   const login = async (email, password) => {
     const res = await axios.post("http://localhost:5000/api/auth/login", {
       email,
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }) => {
     const token = res.data.token;
     localStorage.setItem("token", token);
     const decoded = jwtDecode(token); // Decode token to extract user details
+    console.log("Decoded User:", decoded); // Debugging
     setUser(decoded); // Set user details in state
   };
 

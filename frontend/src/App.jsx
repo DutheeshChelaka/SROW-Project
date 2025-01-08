@@ -14,6 +14,8 @@ import AboutPage from "./pages/about";
 import Layout from "./components/Layout";
 import Profile from "./pages/profile";
 import ProtectedRoute from "./components/ProtectedRoutes";
+import ForgotPassword from "./pages/forgotPassword";
+import ResetPassword from "./pages/resetPassword";
 
 const App = () => {
   return (
@@ -27,6 +29,8 @@ const App = () => {
             {/* Routes without Header */}
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* Protected Route */}
             <Route
@@ -69,10 +73,17 @@ const DynamicBodyClass = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Apply a black background for signup and login pages
-    if (location.pathname === "/signup" || location.pathname === "/login") {
+    // Apply specific class based on route
+    if (
+      location.pathname === "/signup" ||
+      location.pathname === "/login" ||
+      location.pathname === "/forgot-password" ||
+      location.pathname.startsWith("/reset-password")
+    ) {
       document.body.classList.add("auth-page-body");
+      document.body.classList.remove("default-page-body");
     } else {
+      document.body.classList.add("default-page-body");
       document.body.classList.remove("auth-page-body");
     }
   }, [location]);

@@ -1,3 +1,9 @@
+/* Default page styling */
+.default-page-body {
+  background-color: #fff; /* Default background for the rest of the site */
+}
+
+/* Auth page styling */
 .auth-page-body {
-  background-color: #000000; /* Black background for login and signup pages */
+  background-color: #000; /* Black background for login, signup, etc. */
 }
