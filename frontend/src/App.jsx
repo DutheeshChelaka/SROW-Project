@@ -16,6 +16,20 @@ import Profile from "./pages/profile";
 import ProtectedRoute from "./components/ProtectedRoutes";
 import ForgotPassword from "./pages/forgotPassword";
 import ResetPassword from "./pages/resetPassword";
+import Products from "./pages/products";
+import ProductDetails from "./pages/productDetails";
+
+// Admin Panel Components
+import AdminDashboard from "./pages/admin/adminDashboard";
+import ManageCategories from "./pages/admin/manageCategories";
+import ManageSubcategories from "./pages/admin/manageSubcategories";
+import ManageProducts from "./pages/admin/manageProducts";
+import AdminProtectedRoute from "./components/AdminProtectedRoutes";
+import Cart from "./pages/cart";
+import Checkout from "./pages/checkout";
+import AdminOrders from "./pages/admin/manageOrders";
+import OrderDetails from "./pages/admin/orderDetails";
+import OrderHistory from "./pages/orderHistory";
 
 const App = () => {
   return (
@@ -54,11 +68,102 @@ const App = () => {
               }
             />
             <Route
+              path="/products/:subcategoryId"
+              element={
+                <Layout>
+                  <Products />
+                </Layout>
+              }
+            />
+            <Route
+              path="/products/details/:productId"
+              element={
+                <Layout>
+                  <ProductDetails />
+                </Layout>
+              }
+            />
+
+            <Route
               path="/about"
               element={
                 <Layout>
                   <AboutPage />
                 </Layout>
+              }
+            />
+            <Route
+              path="/cart"
+              element={
+                <Layout>
+                  <Cart />
+                </Layout>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <Layout>
+                  <Checkout />
+                </Layout>
+              }
+            />
+            <Route
+              path="/orderHistory"
+              element={
+                <Layout>
+                  <OrderHistory />
+                </Layout>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/categories"
+              element={
+                <AdminProtectedRoute>
+                  <ManageCategories />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/subcategories"
+              element={
+                <AdminProtectedRoute>
+                  <ManageSubcategories />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/products"
+              element={
+                <AdminProtectedRoute>
+                  <ManageProducts />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <AdminProtectedRoute>
+                  <AdminOrders />
+                </AdminProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders/:orderId"
+              element={
+                <AdminProtectedRoute>
+                  <OrderDetails />
+                </AdminProtectedRoute>
               }
             />
           </Routes>

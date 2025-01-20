@@ -1,15 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 import "./Header.css";
 
 const Header = () => {
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState({});
   const [selectedCountry, setSelectedCountry] = useState("Sri Lanka");
   const [currency, setCurrency] = useState("LKR");
 
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5000/api/catalog/categories"
+      );
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchSubcategories = async (categoryId) => {
+    if (subcategories[categoryId]) return; // Avoid duplicate fetches
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/catalog/subcategories/${categoryId}`
+      );
+      setSubcategories((prev) => ({
+        ...prev,
+        [categoryId]: response.data,
+      }));
+    } catch (error) {
+      console.error("Error fetching subcategories:", error);
+    }
+  };
 
   const handleCountryChange = (country) => {
     setSelectedCountry(country);
@@ -22,6 +55,10 @@ const Header = () => {
     } else {
       navigate("/login"); // Redirect to login/signup if not logged in
     }
+  };
+
+  const handleSubcategoryClick = (subcategoryId) => {
+    navigate(`/products/${subcategoryId}`); // Redirect to the products page
   };
 
   return (
@@ -56,18 +93,15 @@ const Header = () => {
 
         {/* Navigation Icons */}
         <div className="nav-icons">
-          <a href="#" className="icon">
-            <i className="fas fa-question-circle"></i> {/* Help Icon */}
-          </a>
-          <a href="#" className="icon">
-            <i className="fas fa-search"></i> {/* Search Icon */}
-          </a>
-          <a onClick={handleProfileClick} className="icon">
-            <i className="fas fa-user"></i> {/* User Profile Icon */}
-          </a>
-          <a href="#" className="icon">
-            <i className="fas fa-shopping-cart"></i> {/* Cart Icon */}
-          </a>
+          <button className="search-icon">
+            <i class="ri-search-line"></i>
+          </button>
+          <button className="user-icon" onClick={handleProfileClick}>
+            <i class="ri-user-line"></i>
+          </button>
+          <button className="cart-icon" onClick={() => navigate("/cart")}>
+            <i class="ri-shopping-cart-line"></i>
+          </button>
         </div>
       </div>
 
@@ -77,57 +111,33 @@ const Header = () => {
       {/* Main Navigation */}
       <nav className="nav-bar">
         <ul className="nav-links">
-          <li className="nav-item">
-            <a href="#">What's New</a>
-            <div className="dropdown">
-              <a href="#new-arrivals">
-                <b>New Arrivals</b>
-              </a>
-              <a href="#">Women's</a>
-              <a href="#">Men's</a>
-            </div>
-          </li>
-          <li className="nav-item">
-            <a href="#">Women</a>
-            <div className="dropdown">
-              <a href="#new-arrivals">
-                <b>New Arrivals</b>
-              </a>
-              <a href="#">Shoes</a>
-              <a href="#">Tops</a>
-              <a href="#">Leggings</a>
-              <a href="#">Pants</a>
-              <a href="#">Shorts</a>
-              <a href="#">Skirts</a>
-              <a href="#">Capris</a>
-              <a href="#">Hoodies</a>
-              <a href="#">Wraps</a>
-            </div>
-          </li>
-          <li className="nav-item">
-            <a href="#">Men</a>
-            <div className="dropdown">
-              <a href="#new-arrivals">
-                <b>New Arrivals</b>
-              </a>
-              <a href="#">Shirts</a>
-              <a href="#">T-Shirts</a>
-              <a href="#">Bottoms</a>
-              <a href="#">Pants</a>
-              <a href="#">Jackets</a>
-              <a href="#">Hoodies</a>
-            </div>
-          </li>
-          <li className="nav-item">
-            <a href="#">Kids & Baby</a>
-            <div className="dropdown">
-              <a href="#new-arrivals">
-                <b>New Arrivals</b>
-              </a>
-              <a href="#">Boys</a>
-              <a href="#">Girls</a>
-            </div>
-          </li>
+          {categories.map((category) => (
+            <li
+              key={category._id}
+              className="nav-item"
+              onMouseEnter={() => fetchSubcategories(category._id)}
+            >
+              <span>{category.name}</span>
+              <div className="dropdown">
+                {subcategories[category._id]?.map((sub) => (
+                  <button
+                    key={sub._id}
+                    onClick={() => handleSubcategoryClick(sub._id)}
+                    style={{
+                      cursor: "pointer",
+                      background: "none",
+                      border: "none",
+                      color: "inherit",
+                      textAlign: "left",
+                      width: "100%",
+                    }}
+                  >
+                    {sub.name}
+                  </button>
+                ))}
+              </div>
+            </li>
+          ))}
         </ul>
       </nav>
     </header>

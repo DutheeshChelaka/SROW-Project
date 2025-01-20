@@ -1,0 +1,95 @@
+/* General page styling */
+.admin-orders-page {
+  background-color: #121212;
+  color: #f5f5f5;
+  font-family: "Arial", sans-serif;
+  padding: 20px;
+}
+
+.page-title {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+/* Orders table styling */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #1e1e1e;
+  color: #f5f5f5;
+  margin-top: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.orders-table th,
+.orders-table td {
+  padding: 10px 15px;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+.orders-table th {
+  background-color: #2c2c2c;
+  color: #f5f5f5;
+  font-weight: bold;
+}
+
+.orders-table tr:nth-child(even) {
+  background-color: #1a1a1a;
+}
+
+.orders-table tr:nth-child(odd) {
+  background-color: #121212;
+}
+
+.status-dropdown {
+  background-color: #2c2c2c;
+  color: #f5f5f5;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+
+.status-dropdown:focus {
+  outline: none;
+  border: 1px solid #2196f3;
+}
+
+/* Button styling */
+.btn {
+  margin: 5px;
+  padding: 8px 15px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  border-radius: 5px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.btn.view-details-btn {
+  background-color: #2196f3;
+  color: #fff;
+}
+
+.btn.delete-order-btn {
+  background-color: #f44336;
+  color: #fff;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+/* Loading and error messages */
+.loading-text,
+.error-text {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 20px;
+}
+
+.error-text {
+  color: #f44336;
+}

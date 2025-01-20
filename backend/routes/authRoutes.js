@@ -96,7 +96,7 @@ router.post(
       };
 
       const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "24h",
       });
 
       res.json({ token, message: "Logged in successfully" });

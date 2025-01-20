@@ -1,9 +1,18 @@
 import React from "react";
 import { useAuth } from "../context/AuthContext";
 import "../styles_pages/profile.css";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth(); // Retrieve user data from context
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove the authentication token
+    localStorage.removeItem("cart"); // Clear cart data
+    navigate("/login"); // Redirect to the login page
+    window.location.reload(); // Refresh the page
+  };
 
   return (
     <div className="profile-container">
@@ -23,8 +32,14 @@ const Profile = () => {
               <p>
                 <strong>Email:</strong> {user.email}
               </p>
-              <button className="logout-button" onClick={logout}>
+              <button className="logout-button" onClick={handleLogout}>
                 Logout
+              </button>
+              <button
+                onClick={() => navigate("/orderHistory")}
+                className="nav-link"
+              >
+                Order History
               </button>
             </div>
           </div>

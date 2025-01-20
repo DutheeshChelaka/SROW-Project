@@ -21,9 +21,8 @@ const productSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subcategory",
   },
-  imageUrl: {
-    type: String,
-  },
+  images: [String], // Array of image paths,
+  sizes: { type: [String], required: true }, // Example sizes: ["S", "M", "L", "XL"]
 });
 
 module.exports = mongoose.model("Product", productSchema);

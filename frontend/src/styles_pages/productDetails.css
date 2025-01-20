@@ -1,0 +1,119 @@
+.product-details-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background-color: #f9f9f9;
+}
+
+.product-details-card {
+  display: flex;
+  flex-direction: row;
+  max-width: 900px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.product-details-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+  padding: 1rem;
+}
+
+.product-details-image {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-details-info {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.product-details-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.product-details-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffc70e;
+  margin-bottom: 1rem;
+}
+
+.product-details-description {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.add-to-cart-btn {
+  background-color: #000000;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+  background-color: #6b6b6b;
+}
+
+.error-text {
+  color: red;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.size-selection {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.size-selection label {
+  font-size: 1rem;
+  margin-left: 20px;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.size-selection select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+  outline: none;
+}
+
+.size-selection select:focus {
+  border-color: #868686;
+}
+
+.add-to-cart-btn {
+  margin-top: 1rem;
+}

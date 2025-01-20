@@ -111,6 +111,9 @@ body {
 .nav-item a:hover {
   text-decoration: underline;
 }
+.nav-item:hover .dropdown {
+  display: block;
+}
 
 .dropdown {
   display: none;
