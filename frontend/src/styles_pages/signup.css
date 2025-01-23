@@ -113,3 +113,10 @@ body {
 .login-link a:hover {
   text-decoration: underline;
 }
+
+.success-message {
+  color: rgb(23, 101, 218);
+  font-size: 1rem;
+  margin-top: 10px;
+  text-align: center;
+}

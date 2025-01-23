@@ -10,9 +10,12 @@ const Header = () => {
   const [subcategories, setSubcategories] = useState({});
   const [selectedCountry, setSelectedCountry] = useState("Sri Lanka");
   const [currency, setCurrency] = useState("LKR");
-
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // State to manage search curtain
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const [searchResults, setSearchResults] = useState([]); // State for search results
+  const [loading, setLoading] = useState(false); // State for loading spinner
 
   useEffect(() => {
     fetchCategories();
@@ -61,6 +64,26 @@ const Header = () => {
     navigate(`/products/${subcategoryId}`); // Redirect to the products page
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      alert("Please enter a search term.");
+      return;
+    }
+
+    try {
+      setLoading(true); // Show loading spinner
+      const response = await axios.get(
+        `http://localhost:5000/api/catalog/products/search?query=${searchQuery}`
+      );
+      setSearchResults(response.data); // Set search results
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+      alert("Error fetching search results. Please try again.");
+    } finally {
+      setLoading(false); // Hide loading spinner
+    }
+  };
+
   return (
     <header className="header">
       {/* Top Bar */}
@@ -93,14 +116,14 @@ const Header = () => {
 
         {/* Navigation Icons */}
         <div className="nav-icons">
-          <button className="search-icon">
-            <i class="ri-search-line"></i>
+          <button className="search-icon" onClick={() => setIsSearchOpen(true)}>
+            <i className="ri-search-line"></i>
           </button>
           <button className="user-icon" onClick={handleProfileClick}>
-            <i class="ri-user-line"></i>
+            <i className="ri-user-line"></i>
           </button>
           <button className="cart-icon" onClick={() => navigate("/cart")}>
-            <i class="ri-shopping-cart-line"></i>
+            <i className="ri-shopping-cart-line"></i>
           </button>
         </div>
       </div>
@@ -140,6 +163,52 @@ const Header = () => {
           ))}
         </ul>
       </nav>
+
+      {/* Search Curtain */}
+      <div className={`search-curtain ${isSearchOpen ? "open" : ""}`}>
+        <button className="back-arrow" onClick={() => setIsSearchOpen(false)}>
+          <i className="ri-arrow-left-line"></i>
+        </button>
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <button className="search-button" onClick={handleSearch}>
+          Search
+        </button>
+
+        {/* Display Search Results */}
+        {loading ? (
+          <p>Loading...</p>
+        ) : searchResults.length > 0 ? (
+          <div className="search-results">
+            {searchResults.map((product) => (
+              <div
+                key={product._id}
+                className="search-result-item"
+                onClick={() => navigate(`/products/details/${product._id}`)}
+              >
+                <img
+                  src={`http://localhost:5000/${product.images[0]}`}
+                  alt={product.name}
+                  className="search-result-image"
+                />
+                <div>
+                  <p className="search-result-name">{product.name}</p>
+                  <p className="search-result-price">
+                    LKR {product.price.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>No results found</p>
+        )}
+      </div>
     </header>
   );
 };

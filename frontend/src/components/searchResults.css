@@ -1,0 +1,41 @@
+.search-results {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #080808;
+  transition: background-color 0.2s ease;
+}
+
+.search-result-item:hover {
+  background-color: #888888;
+}
+
+.search-result-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 5px;
+}
+
+.search-result-name {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.search-result-price {
+  font-size: 14px;
+  color: #ffffff;
+}

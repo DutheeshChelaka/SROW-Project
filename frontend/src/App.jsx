@@ -30,6 +30,8 @@ import Checkout from "./pages/checkout";
 import AdminOrders from "./pages/admin/manageOrders";
 import OrderDetails from "./pages/admin/orderDetails";
 import OrderHistory from "./pages/orderHistory";
+import SearchResults from "./components/searchResults";
+import VerifyEmail from "./pages/verifyEmail";
 
 const App = () => {
   return (
@@ -42,6 +44,7 @@ const App = () => {
 
             {/* Routes without Header */}
             <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -72,6 +75,14 @@ const App = () => {
               element={
                 <Layout>
                   <Products />
+                </Layout>
+              }
+            />
+            <Route
+              path="/search"
+              element={
+                <Layout>
+                  <SearchResults />
                 </Layout>
               }
             />

@@ -22,6 +22,13 @@ const userSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  }, // New field for email verification status
+  verificationToken: {
+    type: String,
+  }, // Field to store the email verification token
 });
 
 const User = mongoose.model("User", userSchema);

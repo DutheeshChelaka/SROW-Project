@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "../../styles_pages/manageSubcategories.css";
 
@@ -8,11 +8,8 @@ const ManageSubcategories = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [newSubcategory, setNewSubcategory] = useState("");
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  // Use useCallback to memoize fetchCategories
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await axios.get(
         "http://localhost:5000/api/catalog/categories"
@@ -25,7 +22,7 @@ const ManageSubcategories = () => {
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
-  };
+  }, []);
 
   const fetchSubcategories = async (categoryId) => {
     try {
@@ -37,6 +34,10 @@ const ManageSubcategories = () => {
       console.error("Error fetching subcategories:", error);
     }
   };
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]); // Add fetchCategories as a dependency
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId);

@@ -33,33 +33,59 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "1h", // Token valid for 1 hour
+      });
+
       user = new User({
         name,
         email,
         password: hashedPassword,
+        verificationToken,
       });
 
       await user.save();
 
-      // Include name and email in the JWT payload
-      const payload = {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      };
-
-      const token = jwt.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+      // Send verification email
+      const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Email Verification",
+        html: `<p>Please verify your email by clicking <a href="${verificationLink}">here</a>. This link is valid for 1 hour.</p>`,
       });
 
-      res.status(201).json({ token, message: "User registered successfully" });
+      res
+        .status(201)
+        .json({ message: "Signup successful! Please verify your email." });
     } catch (err) {
       console.error(err.message);
       res.status(500).send("Server Error");
     }
   }
 );
+
+router.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verify token
+    const user = await User.findOne({ email: decoded.email });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token." });
+    }
+
+    user.isVerified = true; // Mark email as verified
+    user.verificationToken = null; // Clear the token
+    await user.save();
+
+    res.status(200).json({ message: "Email verified successfully!" });
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    res.status(500).json({ message: "Error verifying email", error });
+  }
+});
 
 // @route   POST /api/auth/login
 router.post(
@@ -82,12 +108,17 @@ router.post(
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
+      if (!user.isVerified) {
+        return res
+          .status(403)
+          .json({ message: "Please verify your email first." });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
-      // Include name and email in the JWT payload
       const payload = {
         id: user._id,
         name: user.name,

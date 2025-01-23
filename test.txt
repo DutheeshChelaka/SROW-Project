@@ -1,3 +1,13 @@
 Ecommerce-Clothing-Site
 
 S L D C Karunarathne
+
+
+adding a Admin-
+{
+  "name": "Admin Name",
+  "email": "admin@example.com",
+  "password": "<hashed_password>", // Hash the password first
+  "role": "admin",
+  "isVerified": true
+}

@@ -243,6 +243,29 @@ router.delete(
   }
 );
 
+// Search API
+router.get("/products/search", async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    return res.status(400).json({ message: "Search query is required." });
+  }
+
+  try {
+    // Perform a case-insensitive search on the `name` field
+    const products = await Product.find({
+      name: { $regex: query, $options: "i" }, // Regex for case-insensitive search
+    })
+      .populate("category")
+      .populate("subcategory");
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+});
+
 router.get("/products/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)

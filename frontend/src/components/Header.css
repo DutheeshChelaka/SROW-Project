@@ -144,3 +144,60 @@ body {
 .nav-item:hover .dropdown {
   display: block;
 }
+
+/* Search Curtain */
+.search-curtain {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 400px; /* Adjust width as needed */
+  height: 100%;
+  background-color: #fff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
+
+.search-curtain.open {
+  left: 0;
+}
+
+/* Back Arrow Button */
+.back-arrow {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #000;
+  cursor: pointer;
+  align-self: flex-start;
+  outline: none;
+}
+
+/* Search Input */
+.search-input {
+  width: 90%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Search Button */
+.search-button {
+  width: 100%;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background-color: #444;
+}
