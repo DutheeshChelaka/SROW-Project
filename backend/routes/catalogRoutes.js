@@ -13,6 +13,28 @@ console.log("adminMiddleware:", adminMiddleware); // Should log the function
 // CATEGORY ROUTES
 // ---------------------------
 
+// Fetch products by category
+router.get("/products-by-category/:categoryId", async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+
+    // Find products that belong to the given category
+    const products = await Product.find({ category: categoryId })
+      .populate("category")
+      .populate("subcategory");
+
+    if (!products.length) {
+      return res
+        .status(404)
+        .json({ message: "No products found for this category." });
+    }
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error("Error fetching products by category:", error);
+    res.status(500).json({ message: "Error fetching products", error });
+  }
+});
 // Create a new category
 router.post(
   "/categories",
@@ -144,21 +166,31 @@ const upload = multer({ storage: storage });
 // Route for creating a product with multiple images
 router.post("/products", upload.array("images", 5), async (req, res) => {
   try {
-    const { name, price, description, categoryId, subcategoryId, sizes } =
-      req.body;
+    const {
+      name,
+      priceLKR,
+      priceJPY,
+      description,
+      categoryId,
+      subcategoryId,
+      sizes,
+    } = req.body;
 
-    const parsedSizes = sizes ? JSON.parse(sizes) : []; // Parse the sizes array
-
-    const images = req.files.map((file) => file.path); // Save image paths
+    if (!name || !priceLKR || !priceJPY || !categoryId) {
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided." });
+    }
 
     const product = new Product({
       name,
-      price,
+      priceLKR,
+      priceJPY,
       description,
       category: categoryId,
-      subcategory: subcategoryId,
-      sizes: parsedSizes,
-      images,
+      subcategory: subcategoryId || null,
+      sizes: JSON.parse(sizes),
+      images: req.files ? req.files.map((file) => file.path) : [],
     });
 
     await product.save();
@@ -192,21 +224,38 @@ router.get("/products", async (req, res) => {
 // Update a product
 router.put(
   "/products/:id",
+  upload.array("images", 5),
   [authMiddleware, adminMiddleware],
   async (req, res) => {
-    const { name, price, description, categoryId, subcategoryId, imageUrl } =
-      req.body;
     try {
+      const {
+        name,
+        priceLKR,
+        priceJPY,
+        description,
+        categoryId,
+        subcategoryId,
+        sizes,
+      } = req.body;
+
+      const updatedFields = {
+        name,
+        priceLKR,
+        priceJPY,
+        description,
+        category: categoryId,
+        subcategory: subcategoryId || null,
+        sizes: sizes ? JSON.parse(sizes) : [],
+      };
+
+      // Handle image update
+      if (req.files && req.files.length > 0) {
+        updatedFields.images = req.files.map((file) => file.path);
+      }
+
       const updatedProduct = await Product.findByIdAndUpdate(
         req.params.id,
-        {
-          name,
-          price,
-          description,
-          category: categoryId,
-          subcategory: subcategoryId,
-          imageUrl,
-        },
+        updatedFields,
         { new: true }
       );
 
@@ -278,6 +327,28 @@ router.get("/products/:id", async (req, res) => {
   } catch (error) {
     console.error("Error fetching product:", error.message);
     res.status(500).json({ message: "Server error", error });
+  }
+});
+
+// Get Featured Products (Products with "featured: true")
+router.get("/featured-products", async (req, res) => {
+  try {
+    const featuredProducts = await Product.find({ featured: true })
+      .populate("category")
+      .populate("subcategory");
+
+    if (!featuredProducts.length) {
+      return res
+        .status(404)
+        .json({ message: "No featured products available." });
+    }
+
+    res.status(200).json(featuredProducts);
+  } catch (error) {
+    console.error("Error fetching featured products:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching featured products", error });
   }
 });
 

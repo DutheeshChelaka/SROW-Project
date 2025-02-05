@@ -1,25 +1,29 @@
 const express = require("express");
-const Stripe = require("stripe");
 const router = express.Router();
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Add your secret key to the .env file
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY); // Ensure your secret key is correctly set
 
-// Create Payment Intent Route
 router.post("/create-payment-intent", async (req, res) => {
   try {
     const { amount, currency } = req.body;
 
-    // Create a payment intent
+    if (!amount || !currency) {
+      return res
+        .status(400)
+        .json({ message: "Amount and currency are required" });
+    }
+
+    console.log("💳 Creating Stripe Payment Intent:", { amount, currency });
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount, // Amount in cents (e.g., 1000 = $10.00)
-      currency, // e.g., 'usd'
+      amount: Math.round(amount), // Ensure it's an integer (Stripe requires it in cents)
+      currency: currency.toLowerCase(), // Ensure lowercase (e.g., "jpy", "lkr")
+      payment_method_types: ["card"],
     });
 
-    res.status(200).json({
-      clientSecret: paymentIntent.client_secret,
-    });
+    res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
-    console.error("Error creating payment intent:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("❌ Error creating payment intent:", error);
+    res.status(500).json({ message: "Error processing payment", error });
   }
 });
 

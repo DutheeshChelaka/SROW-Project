@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { CurrencyContext } from "../context/CurrencyContext";
 import axios from "axios";
-
 import "./Header.css";
 
 const Header = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState({});
-  const [selectedCountry, setSelectedCountry] = useState("Sri Lanka");
-  const [currency, setCurrency] = useState("LKR");
+  const { currency, changeCurrency } = useContext(CurrencyContext);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // State to manage search curtain
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [searchResults, setSearchResults] = useState([]); // State for search results
-  const [loading, setLoading] = useState(false); // State for loading spinner
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [debounceTimeout, setDebounceTimeout] = useState(null);
 
   useEffect(() => {
     fetchCategories();
@@ -33,54 +34,48 @@ const Header = () => {
   };
 
   const fetchSubcategories = async (categoryId) => {
-    if (subcategories[categoryId]) return; // Avoid duplicate fetches
+    if (subcategories[categoryId]) return;
     try {
       const response = await axios.get(
         `http://localhost:5000/api/catalog/subcategories/${categoryId}`
       );
-      setSubcategories((prev) => ({
-        ...prev,
-        [categoryId]: response.data,
-      }));
+      setSubcategories((prev) => ({ ...prev, [categoryId]: response.data }));
     } catch (error) {
       console.error("Error fetching subcategories:", error);
     }
   };
 
-  const handleCountryChange = (country) => {
-    setSelectedCountry(country);
-    setCurrency(country === "Sri Lanka" ? "LKR" : "CNY");
-  };
-
-  const handleProfileClick = () => {
-    if (user) {
-      navigate("/profile"); // Redirect to profile if logged in
-    } else {
-      navigate("/login"); // Redirect to login/signup if not logged in
-    }
-  };
-
-  const handleSubcategoryClick = (subcategoryId) => {
-    navigate(`/products/${subcategoryId}`); // Redirect to the products page
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      alert("Please enter a search term.");
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true); // Show loading spinner
       const response = await axios.get(
-        `http://localhost:5000/api/catalog/products/search?query=${searchQuery}`
+        `http://localhost:5000/api/catalog/products/search?query=${query}`
       );
-      setSearchResults(response.data); // Set search results
+      setSearchResults(response.data);
     } catch (error) {
       console.error("Error fetching search results:", error);
-      alert("Error fetching search results. Please try again.");
+      setSearchResults([]);
     } finally {
-      setLoading(false); // Hide loading spinner
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    if (debounceTimeout) clearTimeout(debounceTimeout);
+    setDebounceTimeout(setTimeout(() => handleSearch(value), 500));
+  };
+
+  const closeSearch = (e) => {
+    if (e.target.classList.contains("search-overlay")) {
+      setIsSearchOpen(false);
     }
   };
 
@@ -90,48 +85,46 @@ const Header = () => {
       <div className="top-bar">
         <div className="currency-selector">
           <img
-            src={`flags/${
-              selectedCountry === "Sri Lanka" ? "slflag.png" : "cnflag.jpg"
-            }`}
-            alt={`${selectedCountry} Flag`}
+            src={`flags/${currency === "LKR" ? "slflag.png" : "japanflag.png"}`}
+            alt="Flag"
             className="flag-icon"
           />
           <select
             className="country-dropdown"
-            value={selectedCountry}
-            onChange={(e) => handleCountryChange(e.target.value)}
+            value={currency}
+            onChange={(e) => changeCurrency(e.target.value)}
           >
-            <option value="Sri Lanka">Sri Lanka</option>
-            <option value="China">China</option>
+            <option value="LKR">Sri Lanka (LKR)</option>
+            <option value="JPY">Japan (¥ JPY)</option>
           </select>
-          <span className="currency">{currency}</span>
         </div>
 
-        {/* Logo */}
         <div className="logo-container">
           <Link to="/home">
             <img src="logo/Logo.png" alt="SROW Logo" className="logo-image" />
           </Link>
         </div>
 
-        {/* Navigation Icons */}
         <div className="nav-icons">
-          <button className="search-icon" onClick={() => setIsSearchOpen(true)}>
+          <button onClick={() => setIsSearchOpen(true)}>
             <i className="ri-search-line"></i>
           </button>
-          <button className="user-icon" onClick={handleProfileClick}>
+          <button onClick={() => navigate(user ? "/profile" : "/login")}>
             <i className="ri-user-line"></i>
           </button>
-          <button className="cart-icon" onClick={() => navigate("/cart")}>
+          <button onClick={() => navigate("/cart")}>
             <i className="ri-shopping-cart-line"></i>
+          </button>
+          <button
+            className="mobile-menu-icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <i className="ri-menu-line"></i>
           </button>
         </div>
       </div>
 
-      {/* Divider Line */}
-      <div className="divider"></div>
-
-      {/* Main Navigation */}
+      {/* Desktop Navbar - Hidden on Mobile */}
       <nav className="nav-bar">
         <ul className="nav-links">
           {categories.map((category) => (
@@ -145,15 +138,7 @@ const Header = () => {
                 {subcategories[category._id]?.map((sub) => (
                   <button
                     key={sub._id}
-                    onClick={() => handleSubcategoryClick(sub._id)}
-                    style={{
-                      cursor: "pointer",
-                      background: "none",
-                      border: "none",
-                      color: "inherit",
-                      textAlign: "left",
-                      width: "100%",
-                    }}
+                    onClick={() => navigate(`/products/${sub._id}`)}
                   >
                     {sub.name}
                   </button>
@@ -164,51 +149,84 @@ const Header = () => {
         </ul>
       </nav>
 
-      {/* Search Curtain */}
-      <div className={`search-curtain ${isSearchOpen ? "open" : ""}`}>
-        <button className="back-arrow" onClick={() => setIsSearchOpen(false)}>
-          <i className="ri-arrow-left-line"></i>
+      {/* Mobile Menu */}
+      <div
+        className={`menu-overlay ${mobileMenuOpen ? "open" : ""}`}
+        onClick={() => setMobileMenuOpen(false)}
+      ></div>
+      <div className={`mobile-menu ${mobileMenuOpen ? "open" : ""}`}>
+        <button className="close-menu" onClick={() => setMobileMenuOpen(false)}>
+          ✖
         </button>
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search products..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button className="search-button" onClick={handleSearch}>
-          Search
-        </button>
-
-        {/* Display Search Results */}
-        {loading ? (
-          <p>Loading...</p>
-        ) : searchResults.length > 0 ? (
-          <div className="search-results">
-            {searchResults.map((product) => (
-              <div
-                key={product._id}
-                className="search-result-item"
-                onClick={() => navigate(`/products/details/${product._id}`)}
-              >
-                <img
-                  src={`http://localhost:5000/${product.images[0]}`}
-                  alt={product.name}
-                  className="search-result-image"
-                />
-                <div>
-                  <p className="search-result-name">{product.name}</p>
-                  <p className="search-result-price">
-                    LKR {product.price.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No results found</p>
-        )}
+        <h2>Categories</h2>
+        <ul className="mobile-nav-links">
+          {categories.map((category) => (
+            <li key={category._id} className="mobile-nav-item">
+              <button onClick={() => fetchSubcategories(category._id)}>
+                {category.name}
+              </button>
+              <ul className="mobile-subcategories">
+                {subcategories[category._id]?.map((sub) => (
+                  <li key={sub._id}>
+                    <button onClick={() => navigate(`/products/${sub._id}`)}>
+                      {sub.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
       </div>
+
+      {/* Search Overlay */}
+      {isSearchOpen && (
+        <div className="search-overlay" onClick={closeSearch}>
+          <div className="search-container">
+            <button
+              className="close-search"
+              onClick={() => setIsSearchOpen(false)}
+            >
+              ✖
+            </button>
+            <input
+              type="text"
+              placeholder="Search for products..."
+              value={searchQuery}
+              onChange={handleInputChange}
+            />
+            {loading ? (
+              <p>Loading...</p>
+            ) : searchResults.length > 0 ? (
+              <div className="search-results">
+                {searchResults.map((product) => (
+                  <div
+                    key={product._id}
+                    className="search-result-item"
+                    onClick={() => navigate(`/products/details/${product._id}`)}
+                  >
+                    <img
+                      src={`http://localhost:5000/${product.images[0]}`}
+                      alt={product.name}
+                    />
+                    <div>
+                      <p className="search-result-name">{product.name}</p>
+                      <p className="search-result-price">
+                        {currency}{" "}
+                        {currency === "LKR"
+                          ? product.priceLKR
+                          : product.priceJPY}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No results found</p>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

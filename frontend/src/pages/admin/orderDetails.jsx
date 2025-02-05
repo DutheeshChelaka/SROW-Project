@@ -23,7 +23,7 @@ const OrderDetails = () => {
         );
         setOrder(response.data);
       } catch (err) {
-        console.error("Error fetching order details:", err);
+        console.error("❌ Error fetching order details:", err);
         setError("Error fetching order details. Please try again.");
       } finally {
         setLoading(false);
@@ -36,6 +36,13 @@ const OrderDetails = () => {
   if (loading) return <p>Loading order details...</p>;
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!order) return <p>No order details available.</p>;
+
+  // ✅ Get the correct currency & total
+  const currencySymbol = order.selectedCurrency === "JPY" ? "¥" : "LKR";
+  const totalAmount =
+    order.selectedCurrency === "JPY"
+      ? order.totalJPY ?? 0
+      : order.totalLKR ?? 0;
 
   return (
     <div className="order-details-container">
@@ -52,7 +59,8 @@ const OrderDetails = () => {
           <strong>Address:</strong> {order.userDetails?.address || "N/A"}
         </p>
         <p>
-          <strong>Total Amount:</strong> LKR {order.total?.toFixed(2)}
+          <strong>Total Amount:</strong> {currencySymbol}{" "}
+          {totalAmount.toFixed(2)}
         </p>
         <p>
           <strong>Status:</strong> {order.status}
@@ -60,21 +68,32 @@ const OrderDetails = () => {
       </div>
       <h3>Order Items</h3>
       <ul className="order-items-list">
-        {order.items.map((item, index) => (
-          <li key={index} className="order-item">
-            <div className="item-details">
-              <div>
-                <p>
-                  <strong>{item.productId?.name || "Unnamed Product"}</strong>
-                </p>
-                <p>Size: {item.size || "N/A"}</p>
-                <p>
-                  Quantity: {item.quantity} x LKR {item.price.toFixed(2)}
-                </p>
+        {order.items.map((item, index) => {
+          // ✅ Get correct item price based on selectedCurrency
+          const itemPrice =
+            order.selectedCurrency === "JPY"
+              ? item.priceJPY ?? 0
+              : item.priceLKR ?? 0;
+
+          return (
+            <li key={index} className="order-item">
+              <div className="item-details">
+                <div>
+                  <p>
+                    <strong>
+                      {item.productId?.name || item.name || "Unnamed Product"}
+                    </strong>
+                  </p>
+                  <p>Size: {item.size || "N/A"}</p>
+                  <p>
+                    Quantity: {item.quantity} x {currencySymbol}{" "}
+                    {itemPrice.toFixed(2)}
+                  </p>
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

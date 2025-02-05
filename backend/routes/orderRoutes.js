@@ -21,46 +21,87 @@ router.get("/customer", authMiddleware, async (req, res) => {
 });
 
 // Create a new order
+// Create a new order
+// Create a new order
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { items, total, userDetails, paymentMethod } = req.body;
+    const {
+      user,
+      items,
+      totalLKR,
+      totalJPY,
+      selectedCurrency,
+      userDetails,
+      paymentMethod,
+    } = req.body;
+
+    console.log("📥 Received Order Data:", JSON.stringify(req.body, null, 2));
 
     // Validate required fields
-    if (!items || !total || !userDetails || !paymentMethod) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (
+      !user ||
+      !items ||
+      (!totalLKR && !totalJPY) || // Ensure at least one total is present
+      !selectedCurrency ||
+      !userDetails ||
+      !paymentMethod
+    ) {
+      console.error("❌ Missing required fields:", req.body);
+      return res
+        .status(400)
+        .json({ message: "Missing required fields", receivedData: req.body });
     }
 
-    // Create a new order with the logged-in user's ID
+    // Store selectedCurrency to ensure correct currency display
     const order = new Order({
-      user: req.user.id, // Assign the logged-in user's ID
-      items,
-      total,
+      user,
+      items: items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        size: item.size,
+        quantity: item.quantity,
+        priceLKR: item.priceLKR ?? 0,
+        priceJPY: item.priceJPY ?? 0,
+      })),
+      totalLKR: totalLKR ?? 0,
+      totalJPY: totalJPY ?? 0,
+      selectedCurrency, // ✅ Ensure currency is stored
       userDetails,
       paymentMethod,
     });
 
-    // Save the order to the database
+    // Save to database
     const savedOrder = await order.save();
-
     res
       .status(201)
-      .json({ message: "Order placed successfully", order: savedOrder });
+      .json({ message: "✅ Order placed successfully", order: savedOrder });
   } catch (error) {
-    console.error("Error creating order:", error);
+    console.error("❌ Error creating order:", error);
     res.status(500).json({ message: "Error creating order", error });
   }
 });
 
 // Get all orders for the logged-in user
+// Get all orders for Admin
 router.get("/", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    // Fetch all orders and populate user details
+    // Fetch all orders with user details
     const orders = await Order.find()
-      .populate("user", "name email") // Include user's name and email
+      .populate("user", "name email")
       .sort({ createdAt: -1 });
-    res.status(200).json(orders);
+
+    // Adjust total based on selectedCurrency
+    const updatedOrders = orders.map((order) => ({
+      ...order._doc,
+      displayTotal:
+        order.selectedCurrency === "JPY"
+          ? order.totalJPY ?? 0 // Display JPY total if selected
+          : order.totalLKR ?? 0, // Otherwise, show LKR
+    }));
+
+    res.status(200).json(updatedOrders);
   } catch (error) {
-    console.error("Error fetching orders:", error);
+    console.error("❌ Error fetching orders:", error);
     res.status(500).json({ message: "Error fetching orders", error });
   }
 });

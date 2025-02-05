@@ -5,7 +5,11 @@ const productSchema = mongoose.Schema({
     type: String,
     required: true,
   },
-  price: {
+  priceLKR: {
+    type: Number,
+    required: true,
+  },
+  priceJPY: {
     type: Number,
     required: true,
   },
@@ -21,8 +25,11 @@ const productSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subcategory",
   },
-  images: [String], // Array of image paths,
-  sizes: { type: [String], required: true }, // Example sizes: ["S", "M", "L", "XL"]
+  sizes: {
+    type: [String],
+    required: true,
+  },
+  images: [String], // Array of image paths
 });
 
 module.exports = mongoose.model("Product", productSchema);

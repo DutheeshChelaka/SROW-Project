@@ -1,43 +1,73 @@
+/* Dark Theme Styling */
 .cart-container {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 900px;
+  margin: auto;
   padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #121212;
+  color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
+  margin-top: 120px; /* Pushes cart below header */
 }
 
-.cart-container h1 {
+h1 {
   text-align: center;
+  font-size: 26px;
   margin-bottom: 20px;
-  font-size: 24px;
+  color: #ffffff;
 }
 
+/* Cart Items */
 .cart-items {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
+/* Individual Cart Item */
 .cart-item {
   display: flex;
   align-items: center;
-  gap: 20px;
-  border-bottom: 1px solid #ccc;
-  padding-bottom: 15px;
-}
-
-.cart-item-image {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
+  background: #1e1e1e;
+  padding: 15px;
   border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+.cart-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0px 6px 15px rgba(255, 255, 255, 0.15);
+}
+
+/* Item Image */
+.cart-item-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+  margin-right: 15px;
+  border: 2px solid #ffffff;
+}
+
+/* Item Details */
 .cart-item-details {
   flex: 1;
 }
 
+.cart-item-details h2 {
+  font-size: 18px;
+  color: #ffffff;
+  margin: 0;
+}
+
+.cart-item-details p {
+  font-size: 14px;
+  margin: 5px 0;
+  color: #aaaaaa;
+}
+
+/* Quantity Selector */
 .cart-item-quantity {
   display: flex;
   align-items: center;
@@ -45,55 +75,100 @@
   margin-top: 10px;
 }
 
-.cart-item-quantity button {
-  width: 30px;
-  height: 30px;
-  font-size: 18px;
+.quantity-btn {
+  background: #e94560;
+  color: #ffffff;
+  border: none;
+  padding: 5px 12px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.quantity-btn:hover {
+  background: #f05775;
+}
+
+/* Quantity Display */
+.quantity-display {
+  font-size: 16px;
   font-weight: bold;
-  text-align: center;
-  border: none;
-  background-color: #007bff;
-  color: #fff;
-  border-radius: 50%;
-  cursor: pointer;
+  color: #ffffff;
 }
 
-.cart-item-quantity button:hover {
-  background-color: #0056b3;
-}
-
-.cart-total {
-  text-align: right;
-  font-size: 18px;
-  margin-top: 20px;
-}
-
+/* Remove Item Button */
 .remove-item-btn {
-  margin-top: 10px;
-  margin-left: 5px;
-  padding: 10px 10px;
-  background-color: #dc3545;
-  color: #fff;
+  background: #ff5252;
+  color: #ffffff;
   border: none;
-  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 5px;
   cursor: pointer;
+  transition: 0.3s ease;
+  margin-top: 10px;
 }
 
 .remove-item-btn:hover {
-  background-color: #c82333;
+  background: #ff7272;
 }
 
+/* Cart Total */
+.cart-total {
+  margin-top: 20px;
+  text-align: center;
+  background: #1e1e1e;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(255, 255, 255, 0.1);
+}
+
+.cart-total h2 {
+  font-size: 22px;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+/* Checkout Button */
 .checkout-btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #000000;
-  color: #fff;
+  background: #000000;
+  color: white;
   border: none;
-  border-radius: 5px;
+  padding: 10px 20px;
   font-size: 16px;
+  font-weight: bold;
+  border-radius: 6px;
   cursor: pointer;
+  transition: 0.3s ease;
+  box-shadow: 0px 4px 10px rgb(61, 61, 61);
 }
 
 .checkout-btn:hover {
-  background-color: #6e6e6e;
+  background: #888888;
+  box-shadow: 0px 6px 15px rgba(29, 29, 29, 0.5);
+}
+
+/* Empty Cart Message */
+p {
+  text-align: center;
+  font-size: 16px;
+  color: #aaaaaa;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .cart-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cart-item-image {
+    margin-bottom: 10px;
+  }
+
+  .cart-item-quantity {
+    justify-content: center;
+  }
 }

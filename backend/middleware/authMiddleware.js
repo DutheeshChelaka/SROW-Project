@@ -1,13 +1,13 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User"); // Ensure User model is imported
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {
     return res.status(401).json({ message: "Authorization header is missing" });
   }
 
-  // Check for Bearer token format
   const token = authHeader.startsWith("Bearer ")
     ? authHeader.split(" ")[1]
     : authHeader;
@@ -19,11 +19,29 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Decode and verify token
-    req.user = decoded; // Attach user data to the request object
-    next(); // Pass control to the next middleware
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded.id) {
+      console.error("❌ Decoded token does not contain user ID!");
+      return res
+        .status(401)
+        .json({ message: "Invalid token: No user ID found" });
+    }
+
+    // ✅ Fetch user from the database to get the role
+    const user = await User.findById(decoded.id).select("role");
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    req.user = { id: decoded.id, role: user.role }; // ✅ Store ID & Role
+    console.log("✅ Authenticated User ID:", req.user.id);
+    console.log("✅ User Role:", req.user.role);
+
+    next();
   } catch (err) {
-    console.error("Token verification failed:", err.message); // Optional logging
+    console.error("Token verification failed:", err.message);
     res.status(401).json({ message: "Token is not valid" });
   }
 };

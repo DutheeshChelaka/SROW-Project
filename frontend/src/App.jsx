@@ -32,154 +32,161 @@ import OrderDetails from "./pages/admin/orderDetails";
 import OrderHistory from "./pages/orderHistory";
 import SearchResults from "./components/searchResults";
 import VerifyEmail from "./pages/verifyEmail";
+import { CurrencyProvider } from "./context/CurrencyContext";
 
 const App = () => {
   return (
     <AuthProvider>
-      <Router>
-        <DynamicBodyClass>
-          <Routes>
-            {/* Redirect root path (/) to home */}
-            <Route path="/" element={<Navigate to="/home" />} />
+      <CurrencyProvider>
+        {" "}
+        {/* Wrap the app with CurrencyProvider */}
+        <Router>
+          <DynamicBodyClass>
+            <Routes>
+              {/* Redirect root path (/) to home */}
+              <Route path="/" element={<Navigate to="/home" />} />
 
-            {/* Routes without Header */}
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
+              {/* Routes without Header */}
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route
+                path="/reset-password/:token"
+                element={<ResetPassword />}
+              />
 
-            {/* Protected Route */}
-            <Route
-              path="/profile"
-              element={
-                <Layout>
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                </Layout>
-              }
-            />
+              {/* Protected Route */}
+              <Route
+                path="/profile"
+                element={
+                  <Layout>
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  </Layout>
+                }
+              />
 
-            {/* Routes with Header */}
-            <Route
-              path="/home"
-              element={
-                <Layout>
-                  <HomePage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/products/:subcategoryId"
-              element={
-                <Layout>
-                  <Products />
-                </Layout>
-              }
-            />
-            <Route
-              path="/search"
-              element={
-                <Layout>
-                  <SearchResults />
-                </Layout>
-              }
-            />
-            <Route
-              path="/products/details/:productId"
-              element={
-                <Layout>
-                  <ProductDetails />
-                </Layout>
-              }
-            />
+              {/* Routes with Header */}
+              <Route
+                path="/home"
+                element={
+                  <Layout>
+                    <HomePage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/products/:subcategoryId"
+                element={
+                  <Layout>
+                    <Products />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <Layout>
+                    <SearchResults />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/products/details/:productId"
+                element={
+                  <Layout>
+                    <ProductDetails />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/about"
+                element={
+                  <Layout>
+                    <AboutPage />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/cart"
+                element={
+                  <Layout>
+                    <Cart />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/checkout"
+                element={
+                  <Layout>
+                    <Checkout />
+                  </Layout>
+                }
+              />
+              <Route
+                path="/orderHistory"
+                element={
+                  <Layout>
+                    <OrderHistory />
+                  </Layout>
+                }
+              />
 
-            <Route
-              path="/about"
-              element={
-                <Layout>
-                  <AboutPage />
-                </Layout>
-              }
-            />
-            <Route
-              path="/cart"
-              element={
-                <Layout>
-                  <Cart />
-                </Layout>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <Layout>
-                  <Checkout />
-                </Layout>
-              }
-            />
-            <Route
-              path="/orderHistory"
-              element={
-                <Layout>
-                  <OrderHistory />
-                </Layout>
-              }
-            />
-
-            {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <AdminProtectedRoute>
-                  <AdminDashboard />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/categories"
-              element={
-                <AdminProtectedRoute>
-                  <ManageCategories />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/subcategories"
-              element={
-                <AdminProtectedRoute>
-                  <ManageSubcategories />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/products"
-              element={
-                <AdminProtectedRoute>
-                  <ManageProducts />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/orders"
-              element={
-                <AdminProtectedRoute>
-                  <AdminOrders />
-                </AdminProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/orders/:orderId"
-              element={
-                <AdminProtectedRoute>
-                  <OrderDetails />
-                </AdminProtectedRoute>
-              }
-            />
-          </Routes>
-        </DynamicBodyClass>
-      </Router>
+              {/* Admin Routes */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminDashboard />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <AdminProtectedRoute>
+                    <ManageCategories />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/subcategories"
+                element={
+                  <AdminProtectedRoute>
+                    <ManageSubcategories />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <AdminProtectedRoute>
+                    <ManageProducts />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/orders"
+                element={
+                  <AdminProtectedRoute>
+                    <AdminOrders />
+                  </AdminProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/orders/:orderId"
+                element={
+                  <AdminProtectedRoute>
+                    <OrderDetails />
+                  </AdminProtectedRoute>
+                }
+              />
+            </Routes>
+          </DynamicBodyClass>
+        </Router>
+      </CurrencyProvider>
     </AuthProvider>
   );
 };
