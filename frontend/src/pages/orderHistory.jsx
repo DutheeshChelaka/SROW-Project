@@ -66,6 +66,9 @@ const OrderHistory = () => {
                     Total: {currencySymbol} {orderTotal.toFixed(2)}
                   </p>
                   <p className="order-status">Status: {order.status}</p>
+                  <p className="order-payment-method">
+                    Payment Method: {order.paymentMethod}
+                  </p>
                   <button
                     className="view-details-btn"
                     onClick={() => setSelectedOrder(order)}
@@ -95,6 +98,10 @@ const OrderHistory = () => {
               <p>
                 <strong>Address:</strong>{" "}
                 {selectedOrder.userDetails?.address || "N/A"}
+              </p>
+              <p>
+                <strong>Payment Method:</strong>{" "}
+                {selectedOrder.paymentMethod || "N/A"}
               </p>
               <h3>Ordered Products:</h3>
               <ul>

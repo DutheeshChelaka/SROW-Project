@@ -220,9 +220,8 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
         phone: formData.contact,
         address: formData.address,
       },
-      paymentMethod,
+      paymentMethod, // This field must be saved in the order document
     };
-
     const response = await axios.post(
       "http://localhost:5000/api/orders",
       order,

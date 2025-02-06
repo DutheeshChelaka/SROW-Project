@@ -13,30 +13,46 @@ const HomePage = () => {
   useEffect(() => {
     const fetchCategoriesAndProducts = async () => {
       try {
+        // Fetch categories
         const categoriesResponse = await axios.get(
           "http://localhost:5000/api/catalog/categories"
         );
         const categories = categoriesResponse.data;
+        console.log("Fetched categories:", categories);
 
         const categoryProducts = {};
 
+        // For each category, fetch products
         for (const category of categories) {
-          const productsResponse = await axios.get(
-            `http://localhost:5000/api/catalog/products-by-category/${category._id}`
-          );
-          categoryProducts[category.name] = productsResponse.data;
+          try {
+            const productsResponse = await axios.get(
+              `http://localhost:5000/api/catalog/products-by-category/${category._id}`
+            );
+            console.log(
+              `Products for category "${category.name}":`,
+              productsResponse.data
+            );
+            // Save products under the category name
+            categoryProducts[category.name] = productsResponse.data;
+          } catch (error) {
+            console.error(
+              `Error fetching products for category ${category.name}:`,
+              error
+            );
+            categoryProducts[category.name] = [];
+          }
         }
 
         setProductsByCategory(categoryProducts);
       } catch (error) {
-        console.error("Error fetching products by category:", error);
+        console.error("Error fetching categories and products:", error);
       }
     };
 
     fetchCategoriesAndProducts();
   }, []);
 
-  // Function to scroll smoothly to products
+  // Function to scroll smoothly to the products section
   const scrollToProducts = () => {
     if (productsRef.current) {
       productsRef.current.scrollIntoView({

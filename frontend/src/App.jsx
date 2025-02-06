@@ -6,40 +6,47 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+
+// Context Providers
 import { AuthProvider } from "./context/AuthContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
+
+// Components & Pages
+import AutoCurrencySetter from "./context/AutoCurrencySetter";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoutes";
+import AdminProtectedRoute from "./components/AdminProtectedRoutes";
+
+// Public Pages
 import Signup from "./pages/signup";
 import Login from "./pages/login";
-import HomePage from "./pages/home";
-import AboutPage from "./pages/about";
-import Layout from "./components/Layout";
-import Profile from "./pages/profile";
-import ProtectedRoute from "./components/ProtectedRoutes";
 import ForgotPassword from "./pages/forgotPassword";
 import ResetPassword from "./pages/resetPassword";
+import VerifyEmail from "./pages/verifyEmail";
+import HomePage from "./pages/home";
+import AboutPage from "./pages/about";
 import Products from "./pages/products";
 import ProductDetails from "./pages/productDetails";
+import SearchResults from "./components/searchResults";
+import Cart from "./pages/cart";
+import Checkout from "./pages/checkout";
+import OrderHistory from "./pages/orderHistory";
+import Profile from "./pages/profile";
 
-// Admin Panel Components
+// Admin Panel Pages
 import AdminDashboard from "./pages/admin/adminDashboard";
 import ManageCategories from "./pages/admin/manageCategories";
 import ManageSubcategories from "./pages/admin/manageSubcategories";
 import ManageProducts from "./pages/admin/manageProducts";
-import AdminProtectedRoute from "./components/AdminProtectedRoutes";
-import Cart from "./pages/cart";
-import Checkout from "./pages/checkout";
 import AdminOrders from "./pages/admin/manageOrders";
 import OrderDetails from "./pages/admin/orderDetails";
-import OrderHistory from "./pages/orderHistory";
-import SearchResults from "./components/searchResults";
-import VerifyEmail from "./pages/verifyEmail";
-import { CurrencyProvider } from "./context/CurrencyContext";
 
 const App = () => {
   return (
     <AuthProvider>
       <CurrencyProvider>
-        {" "}
-        {/* Wrap the app with CurrencyProvider */}
+        {/* Automatically set the currency based on user/profile or geolocation */}
+        <AutoCurrencySetter />
         <Router>
           <DynamicBodyClass>
             <Routes>
@@ -191,12 +198,13 @@ const App = () => {
   );
 };
 
-// A wrapper to dynamically set the body class based on the route
+// A wrapper to dynamically set the body class based on the current route.
+// This is useful if you have different layouts (e.g., auth pages vs. default pages).
 const DynamicBodyClass = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Apply specific class based on route
+    // Apply a specific body class based on the current route.
     if (
       location.pathname === "/signup" ||
       location.pathname === "/login" ||

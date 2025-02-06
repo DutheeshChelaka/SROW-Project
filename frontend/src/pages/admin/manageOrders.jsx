@@ -91,6 +91,7 @@ const AdminOrders = () => {
               <th>Order ID</th>
               <th>Customer</th>
               <th>Total</th>
+              <th>Payment Method</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -99,16 +100,19 @@ const AdminOrders = () => {
             {orders.map((order) => {
               const currencySymbol =
                 order.selectedCurrency === "JPY" ? "¥" : "LKR";
-              const totalAmount = order.displayTotal.toFixed(2); // Ensure proper formatting
+              const totalAmount =
+                order.selectedCurrency === "JPY"
+                  ? order.totalJPY || 0
+                  : order.totalLKR || 0;
 
               return (
                 <tr key={order._id}>
                   <td>{order._id}</td>
                   <td>{order.userDetails?.name || "Anonymous"}</td>
                   <td>
-                    {currencySymbol} {totalAmount}
-                  </td>{" "}
-                  {/* ✅ Correct currency & total */}
+                    {currencySymbol} {totalAmount.toFixed(2)}
+                  </td>
+                  <td>{order.paymentMethod || "N/A"}</td>
                   <td>
                     <select
                       className="status-dropdown"
