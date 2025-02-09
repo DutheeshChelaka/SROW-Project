@@ -16,6 +16,8 @@ connectDB();
 // Serve static files from the "uploads" folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.use("/public", express.static("public"));
+
 // Routes
 app.use("/api/auth", authRoutes); // Use the authRoutes for `/api/auth` endpoint
 

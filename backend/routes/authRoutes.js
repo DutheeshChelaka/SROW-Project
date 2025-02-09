@@ -48,11 +48,38 @@ router.post(
 
       // Send verification email
       const verificationLink = `${process.env.CLIENT_URL}/verify-email?token=${verificationToken}`;
+
+      const emailHTML = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+    <div style="text-align: center;">
+      <img src="https://srow.store/logo/Logo.png" alt="Company Logo" style="max-width: 150px; margin-bottom: 20px;">
+    </div>
+    <h2 style="color: #1A1A2E; text-align: center;">Welcome to Our SROW Clothing!</h2>
+    <p style="font-size: 16px; color: #333;">
+      Hi <strong>${name}</strong>, <br><br>
+      Thank you for signing up! Please verify your email address to activate your account.
+    </p>
+    <div style="text-align: center; margin: 20px 0;">
+      <a href="${verificationLink}" 
+         style="background-color:rgb(105, 69, 233); color: #fff; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-size: 16px; font-weight: bold;">
+        Verify Email
+      </a>
+    </div>
+    <p style="font-size: 14px; color: #666;">
+      If you did not create this account, please ignore this email.
+    </p>
+    <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+    <p style="text-align: center; font-size: 12px; color: #888;">
+      &copy; ${new Date().getFullYear()} SROW | All Rights Reserved
+    </p>
+  </div>
+`;
+
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"SROW" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Email Verification",
-        html: `<p>Please verify your email by clicking <a href="${verificationLink}">here</a>. This link is valid for 1 hour.</p>`,
+        subject: "Confirm Your Email Address",
+        html: emailHTML,
       });
 
       res
@@ -87,16 +114,43 @@ router.get("/verify-email", async (req, res) => {
   }
 });
 
+// Track failed login attempts
+const loginAttempts = new Map(); // { email: { count, lastAttempt } }
+
+// Middleware to check login attempts (rate limiting)
+const checkLoginAttempts = (req, res, next) => {
+  const { email } = req.body;
+  const userAttempts = loginAttempts.get(email) || {
+    count: 0,
+    lastAttempt: null,
+  };
+
+  if (userAttempts.count >= 5) {
+    const timeSinceLastAttempt = Date.now() - userAttempts.lastAttempt;
+    if (timeSinceLastAttempt < 15 * 60 * 1000) {
+      // 15-minute lockout
+      return res
+        .status(429)
+        .json({ message: "Too many failed attempts. Try again later." });
+    } else {
+      loginAttempts.set(email, { count: 0, lastAttempt: null }); // Reset after cooldown
+    }
+  }
+  next();
+};
+
 // @route   POST /api/auth/login
 router.post(
   "/login",
   [
     body("email").isEmail().withMessage("Valid email is required"),
-    body("password").exists().withMessage("Password is required"),
+    body("password").notEmpty().withMessage("Password is required"),
   ],
+  checkLoginAttempts,
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("❌ Validation Error:", errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -105,19 +159,38 @@ router.post(
     try {
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ message: "Invalid credentials" });
+        console.log("❌ Login failed - Email not registered:", email);
+        return res.status(400).json({ message: "Invalid email or password." });
       }
 
       if (!user.isVerified) {
+        console.log("⚠ Login failed - Email not verified:", email);
         return res
           .status(403)
-          .json({ message: "Please verify your email first." });
+          .json({ message: "Please verify your email before logging in." });
       }
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        return res.status(400).json({ message: "Invalid credentials" });
+        console.log("❌ Login failed - Incorrect password:", email);
+
+        // Track failed attempts
+        const userAttempts = loginAttempts.get(email) || {
+          count: 0,
+          lastAttempt: null,
+        };
+        loginAttempts.set(email, {
+          count: userAttempts.count + 1,
+          lastAttempt: Date.now(),
+        });
+
+        return res.status(400).json({ message: "Invalid email or password." });
       }
+
+      // Reset login attempts on success
+      loginAttempts.delete(email);
+
+      console.log("✅ Login successful:", email);
 
       const payload = {
         id: user._id,
@@ -132,8 +205,10 @@ router.post(
 
       res.json({ token, message: "Logged in successfully" });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
+      console.error("🚨 Server Error:", err.message);
+      res
+        .status(500)
+        .json({ message: "Server error. Please try again later." });
     }
   }
 );
@@ -173,11 +248,45 @@ router.post(
 
       // Send reset link via email
       const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+      const emailHTML = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #f9f9f9;">
+    <div style="text-align: center; padding: 20px 0;">
+      <img src="https://srow.store/logo/Logo.png" alt="SROW Logo" style="max-width: 150px; margin-bottom: 20px;">
+    </div>
+    
+    <h2 style="color: #1A1A2E; text-align: center;">Password Reset Request</h2>
+    
+    <p style="font-size: 16px; color: #333; text-align: center;">
+      Hi, <br>
+      We received a request to reset your password. Click the button below to reset it.
+    </p>
+    
+    <div style="text-align: center; margin: 20px;">
+      <a href="${resetLink}" 
+         style="background-color: #E94560; color: #fff; text-decoration: none; padding: 12px 20px; 
+                border-radius: 5px; font-size: 16px; font-weight: bold; display: inline-block;">
+        Reset Password
+      </a>
+    </div>
+
+    <p style="font-size: 14px; color: #666; text-align: center;">
+      If you did not request this, please ignore this email. Your password will remain the same.
+    </p>
+    
+    <hr style="border: 0; height: 1px; background: #ddd; margin: 20px 0;">
+    
+    <p style="text-align: center; font-size: 12px; color: #888;">
+      &copy; ${new Date().getFullYear()} SROW | All Rights Reserved
+    </p>
+  </div>
+`;
+
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"SROW Support" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Password Reset Request",
-        html: `<p>Click <a href="${resetLink}">here</a> to reset your password. The link is valid for 15 minutes.</p>`,
+        subject: "Reset Your Password",
+        html: emailHTML,
       });
 
       res.status(200).json({ message: "Reset link sent to your email" });
