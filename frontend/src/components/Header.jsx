@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { CurrencyContext } from "../context/CurrencyContext";
 import axios from "axios";
 import "./Header.css";
+import SearchResults from "./searchResults";
 
 const Header = () => {
   const [categories, setCategories] = useState([]);
@@ -14,6 +15,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchActive, setSearchActive] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [debounceTimeout, setDebounceTimeout] = useState(null);
@@ -182,6 +184,7 @@ const Header = () => {
       {/* Search Overlay */}
       {isSearchOpen && (
         <div className="search-overlay" onClick={closeSearch}>
+          {searchActive && <SearchResults setSearchActive={setSearchActive} />}
           <div className="search-container">
             <button
               className="close-search"

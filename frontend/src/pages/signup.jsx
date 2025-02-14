@@ -1,6 +1,8 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../styles_pages/signup.css";
 
 const Signup = () => {
@@ -10,83 +12,85 @@ const Signup = () => {
     password: "",
   });
 
-  const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const { signup } = useContext(AuthContext);
 
   const validate = (name, value) => {
-    let error = "";
-
     switch (name) {
       case "name":
-        if (!value.trim()) error = "Name is required.";
-        break;
+        if (!value.trim()) return "⚠️ Name is required.";
+        if (value.length < 3) return "⚠️ Name must be at least 3 characters.";
+        return "";
       case "email":
-        if (!value) {
-          error = "Email is required.";
-        } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value)) {
-          error = "Invalid email format.";
-        }
-        break;
+        if (!value) return "⚠️ Email is required.";
+        if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(value))
+          return "⚠️ Invalid email format.";
+        return "";
       case "password":
-        if (!value) {
-          error = "Password is required.";
-        } else if (value.length < 6) {
-          error = "Password must be at least 6 characters long.";
-        }
-        break;
+        if (!value) return "⚠️ Password is required.";
+        if (value.length < 6)
+          return "⚠️ Password must be at least 6 characters.";
+        if (!/[A-Z]/.test(value))
+          return "⚠️ Password must contain at least one uppercase letter.";
+        if (!/\d/.test(value))
+          return "⚠️ Password must contain at least one number.";
+        return "";
       default:
-        break;
+        return "";
     }
-    return error;
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-
-    // Validate input in real-time
-    const error = validate(name, value);
-    setErrors((prevErrors) => {
-      const newErrors = { ...prevErrors };
-      if (error) {
-        newErrors[name] = error;
-      } else {
-        delete newErrors[name]; // Remove error when input is valid
-      }
-      return newErrors;
-    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Perform final validation before submitting
-    let newErrors = {};
+    let validationErrors = {};
     Object.keys(formData).forEach((key) => {
       const error = validate(key, formData[key]);
-      if (error) {
-        newErrors[key] = error;
-      }
+      if (error) validationErrors[key] = error;
     });
 
-    setErrors(newErrors);
-
-    // Stop if there are errors
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      Object.values(validationErrors).forEach((error) => toast.error(error));
+      return;
+    }
 
     setLoading(true);
     try {
-      await signup(formData.name, formData.email, formData.password);
-      setSuccessMessage(
-        `Signup successful! Please check your email (${formData.email}) to verify your account.`
+      const response = await signup(
+        formData.name,
+        formData.email,
+        formData.password
       );
+
+      // ✅ Show success toast from backend response
+      toast.success(
+        response.message ||
+          "🎉 Signup successful! Please check your email for verification."
+      );
+
+      // ✅ Clear form fields after successful signup
       setFormData({ name: "", email: "", password: "" });
-      setErrors({});
     } catch (err) {
-      console.error(err);
-      alert("Signup failed. Please try again.");
+      if (err.response) {
+        // ✅ Handle different error messages
+        if (err.response.status === 400) {
+          toast.error(
+            err.response.data.message ||
+              "⚠️ User already exists. Please log in."
+          );
+        } else {
+          toast.error(
+            err.response.data.message || "❌ Signup failed. Please try again."
+          );
+        }
+      } else {
+        toast.error("🚨 Network error. Please check your connection.");
+      }
     } finally {
       setLoading(false);
     }
@@ -94,62 +98,54 @@ const Signup = () => {
 
   return (
     <div className="signup-container">
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <div className="signup-header">
         <img src="/logo/Logo.png" alt="SROW Logo" className="signup-logo" />
         <h1 className="signup-title">SROW</h1>
       </div>
+
       <div className="signup-form-container">
         <h2>Sign Up</h2>
-        {successMessage ? (
-          <p className="success-message">{successMessage}</p>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <div className="input-container">
-              <input
-                name="name"
-                type="text"
-                placeholder="Name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-              {errors.name && <p className="error-message">{errors.name}</p>}
-            </div>
+        <form onSubmit={handleSubmit}>
+          <div className="input-container">
+            <input
+              name="name"
+              type="text"
+              placeholder="Full Name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className="input-container">
-              <input
-                name="email"
-                type="email"
-                placeholder="Email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-              {errors.email && <p className="error-message">{errors.email}</p>}
-            </div>
+          <div className="input-container">
+            <input
+              name="email"
+              type="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className="input-container">
-              <input
-                name="password"
-                type="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
-              {errors.password && (
-                <p className="error-message">{errors.password}</p>
-              )}
-            </div>
+          <div className="input-container">
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading || Object.keys(errors).length > 0}
-            >
-              {loading ? "Signing Up..." : "Sign Up"}
-            </button>
-          </form>
-        )}
+          <button type="submit" disabled={loading}>
+            {loading ? "Signing Up..." : "Sign Up"}
+          </button>
+        </form>
+
         <div className="login-link">
           <p>
             Already have an account? <Link to="/login">Log in here</Link>

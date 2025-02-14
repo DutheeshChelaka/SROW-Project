@@ -1,4 +1,4 @@
 main {
-  margin-top: 100px; /* Add space below the header */
-  padding: 20px; /* Add padding around the content */
+  margin-top: 60px; /* Adjust this based on your header's actual height */
+  padding: 20px;
 }

@@ -176,12 +176,22 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res) => {
 // Get all customer-specific orders (customer view)
 router.get("/customer", authMiddleware, async (req, res) => {
   try {
+    console.log("🔍 Extracted User ID from authMiddleware:", req.user?._id); // Debug log
+
+    if (!req.user?._id) {
+      console.error("❌ No user ID found in request");
+      return res.status(401).json({ message: "Unauthorized. No user ID." });
+    }
+
     const orders = await Order.find({ user: req.user._id }).sort({
       createdAt: -1,
     });
+
+    console.log("✅ Orders found for user:", req.user._id, orders);
+
     res.status(200).json(orders);
   } catch (error) {
-    console.error("Error fetching customer orders:", error);
+    console.error("❌ Error fetching customer orders:", error);
     res
       .status(500)
       .json({ message: "Error fetching orders. Please try again." });

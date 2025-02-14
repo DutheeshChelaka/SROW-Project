@@ -13,7 +13,7 @@ import axios from "axios";
 import "../styles_pages/checkout.css";
 
 const stripePromise = loadStripe(
-  "pk_test_51QoqFgDIa8vzXOS4lk85Y8OR0nGVVc1WuRrxKULfijDxgfzxIYelETFlxWKeOKcLFhb9ZG2bJ4zbUdbFcHlFRlbV00hFBe9JQ6"
+  "pk_test_51Q3m8rJZW6okBw3PP5TFLjkcEbnUWebpDhdhiTU5kbfSIdqzvApmztcsNfDgPJ34aWHGzqczsmZTkRkPLDjzg0cn00PAegmYD1"
 );
 
 const OrderConfirmationModal = ({
@@ -22,13 +22,12 @@ const OrderConfirmationModal = ({
   onCancel,
   orderDetails,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="modal-overlay">
+    <div className={`modal-overlay ${isOpen ? "show" : ""}`}>
       <div className="modal-content">
         <h2>Confirm Your Order</h2>
 
+        {/* 📦 Delivery Details */}
         <div className="confirmation-section">
           <h3>Delivery Details</h3>
           <div className="detail-row">
@@ -43,12 +42,9 @@ const OrderConfirmationModal = ({
             <span className="detail-label">Contact:</span>
             <span className="detail-value">{orderDetails.contact}</span>
           </div>
-          <div className="detail-row">
-            <span className="detail-label">Payment Method:</span>
-            <span className="detail-value">{orderDetails.paymentMethod}</span>
-          </div>
         </div>
 
+        {/* 🛍️ Order Summary */}
         <div className="confirmation-section">
           <h3>Order Summary</h3>
           <div className="order-items">
@@ -59,12 +55,11 @@ const OrderConfirmationModal = ({
                   alt={item.name}
                   className="item-thumbnail"
                 />
-
                 <div className="item-details">
                   <p className="item-name">{item.name}</p>
-                  <p className="item-size">Size: {item.size}</p>
-                  <p className="item-quantity">Quantity: {item.quantity}</p>
-                  <p className="item-price">
+                  <p>Size: {item.size}</p>
+                  <p>Quantity: {item.quantity}</p>
+                  <p>
                     {orderDetails.currency}{" "}
                     {orderDetails.currency === "LKR"
                       ? item.priceLKR
@@ -76,14 +71,16 @@ const OrderConfirmationModal = ({
             ))}
           </div>
 
+          {/* 💳 Total Price */}
           <div className="order-total">
             <h4>Total Amount</h4>
-            <p className="total-amount">
+            <p>
               {orderDetails.currency} {orderDetails.totalPrice}
             </p>
           </div>
         </div>
 
+        {/* 🔘 Action Buttons */}
         <div className="modal-actions">
           <button className="confirm-button" onClick={onConfirm}>
             Confirm Order
@@ -152,40 +149,57 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
       );
     }
 
-    const { data } = await axios.post(
-      "http://localhost:5000/api/stripe/create-payment-intent",
-      {
-        amount: amountToCharge,
-        currency: currency.toLowerCase(),
-      }
-    );
+    try {
+      // Create a payment intent
+      const { data } = await axios.post(
+        "http://localhost:5000/api/stripe/create-payment-intent",
+        {
+          amount: amountToCharge,
+          currency: currency.toLowerCase(),
+        }
+      );
 
-    const cardElement = elements.getElement(CardElement);
-    const { error, paymentIntent } = await stripe.confirmCardPayment(
-      data.clientSecret,
-      {
-        payment_method: {
-          card: cardElement,
-          billing_details: {
-            name: formData.name,
-            email: user?.email || "guest@example.com",
-            phone: formData.contact,
-            address: {
-              line1: formData.address,
-              postal_code: formData.postalCode?.trim() || "10000",
-              country: currency === "JPY" ? "JP" : "LK",
+      console.log("✅ Received Client Secret:", data.clientSecret);
+      console.log("🔹 Payment Intent ID:", data.id); // Log Payment Intent ID
+
+      if (!data.clientSecret) {
+        throw new Error("Failed to get client secret from Stripe.");
+      }
+
+      const cardElement = elements.getElement(CardElement);
+
+      console.log("🔹 Confirming Payment Intent with ID:", data.id);
+
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        data.clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: formData.name,
+              email: user?.email || "guest@example.com",
+              phone: formData.contact,
+              address: {
+                line1: formData.address,
+                postal_code: formData.postalCode?.trim() || "10000",
+                country: currency === "JPY" ? "JP" : "LK",
+              },
             },
           },
-        },
+        }
+      );
+
+      if (error) {
+        throw new Error(error.message);
       }
-    );
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    if (paymentIntent.status === "succeeded") {
-      await saveOrder("card");
+      if (paymentIntent.status === "succeeded") {
+        console.log("✅ Payment Intent Confirmed:", paymentIntent.id);
+        await saveOrder("card");
+      }
+    } catch (error) {
+      console.error("❌ Error processing order:", error.message);
+      setError(error.message || "Failed to process order. Please try again.");
     }
   };
 
@@ -222,13 +236,9 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
       },
       paymentMethod, // This field must be saved in the order document
     };
-    const response = await axios.post(
-      "http://localhost:5000/api/orders",
-      order,
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      }
-    );
+    await axios.post("http://localhost:5000/api/orders", order, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
 
     localStorage.removeItem("cart");
     navigate("/orderHistory");
@@ -248,7 +258,7 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
                   fontSize: "16px",
                   color: "#424770",
                   "::placeholder": {
-                    color: "#aab7c4",
+                    color: "#ffffff",
                   },
                 },
                 invalid: {

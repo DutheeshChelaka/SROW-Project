@@ -20,7 +20,12 @@ router.post("/create-payment-intent", async (req, res) => {
       payment_method_types: ["card"],
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    console.log("✅ Stripe Payment Intent Created:", paymentIntent);
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      id: paymentIntent.id,
+    });
   } catch (error) {
     console.error("❌ Error creating payment intent:", error);
     res.status(500).json({ message: "Error processing payment", error });

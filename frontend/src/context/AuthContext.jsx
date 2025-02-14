@@ -16,23 +16,20 @@ export const AuthProvider = ({ children }) => {
       });
 
       const token = res.data.token;
-      localStorage.setItem("token", token); // ✅ Store token
+      localStorage.setItem("token", token);
 
-      // Decode token to extract user details
       const decoded = jwtDecode(token);
-      console.log("🔑 Decoded User:", decoded); // Debugging
-
-      if (!decoded.id && !decoded._id) {
-        console.error("❌ Decoded token does not contain user ID");
-      } else {
-        const userId = decoded.id || decoded._id;
-        localStorage.setItem("userId", userId); // ✅ Store user ID explicitly
-        console.log("✅ User ID stored in localStorage:", userId);
-      }
-
       setUser(decoded);
+
+      return { message: res.data.message, token }; // ✅ Return success message immediately
     } catch (error) {
-      console.error("❌ Login failed:", error);
+      if (error.response) {
+        throw new Error(
+          error.response.data.message || "❌ Login failed. Please try again."
+        );
+      } else {
+        throw new Error("🚨 Network error. Please check your connection.");
+      }
     }
   };
 
@@ -64,11 +61,24 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signup = async (name, email, password) => {
-    await axios.post("http://localhost:5000/api/auth/signup", {
-      name,
-      email,
-      password,
-    });
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/auth/signup",
+        {
+          name,
+          email,
+          password,
+        }
+      );
+
+      return response.data; // ✅ Ensure this returns the backend response
+    } catch (error) {
+      if (error.response) {
+        throw error.response.data; // ✅ Throw structured error from backend
+      } else {
+        throw new Error("🚨 Network error. Please check your connection.");
+      }
+    }
   };
 
   const logout = () => {

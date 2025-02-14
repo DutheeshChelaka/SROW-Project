@@ -10,11 +10,19 @@ const { body, validationResult } = require("express-validator");
 router.post(
   "/signup",
   [
-    body("name").notEmpty().withMessage("Name is required"),
+    body("name")
+      .notEmpty()
+      .withMessage("Name is required")
+      .isLength({ min: 3 })
+      .withMessage("Name must be at least 3 characters"),
     body("email").isEmail().withMessage("Valid email is required"),
     body("password")
       .isLength({ min: 6 })
-      .withMessage("Password must be at least 6 characters"),
+      .withMessage("Password must be at least 6 characters")
+      .matches(/[A-Z]/)
+      .withMessage("Password must contain at least one uppercase letter")
+      .matches(/\d/)
+      .withMessage("Password must contain at least one number"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -27,7 +35,9 @@ router.post(
     try {
       let user = await User.findOne({ email });
       if (user) {
-        return res.status(400).json({ message: "User already exists" });
+        return res
+          .status(400)
+          .json({ message: "User already exists. Please log in." });
       }
 
       const salt = await bcrypt.genSalt(10);
@@ -75,19 +85,29 @@ router.post(
   </div>
 `;
 
-      await transporter.sendMail({
-        from: `"SROW" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: "Confirm Your Email Address",
-        html: emailHTML,
-      });
+      try {
+        await transporter.sendMail({
+          from: `"SROW" <${process.env.EMAIL_USER}>`,
+          to: email,
+          subject: "Confirm Your Email Address",
+          html: emailHTML,
+        });
+      } catch (emailError) {
+        console.error("❌ Email sending failed:", emailError);
+        return res.status(500).json({
+          message:
+            "Signup successful, but email verification failed. Please contact support.",
+        });
+      }
 
       res
         .status(201)
         .json({ message: "Signup successful! Please verify your email." });
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send("Server Error");
+      console.error("❌ Signup Error:", err.message);
+      res
+        .status(500)
+        .json({ message: "Server error. Please try again later." });
     }
   }
 );
@@ -150,8 +170,9 @@ router.post(
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log("❌ Validation Error:", errors.array());
-      return res.status(400).json({ errors: errors.array() });
+      return res
+        .status(400)
+        .json({ message: "Validation failed", errors: errors.array() });
     }
 
     const { email, password } = req.body;
@@ -159,12 +180,10 @@ router.post(
     try {
       const user = await User.findOne({ email });
       if (!user) {
-        console.log("❌ Login failed - Email not registered:", email);
         return res.status(400).json({ message: "Invalid email or password." });
       }
 
       if (!user.isVerified) {
-        console.log("⚠ Login failed - Email not verified:", email);
         return res
           .status(403)
           .json({ message: "Please verify your email before logging in." });
@@ -172,25 +191,8 @@ router.post(
 
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
-        console.log("❌ Login failed - Incorrect password:", email);
-
-        // Track failed attempts
-        const userAttempts = loginAttempts.get(email) || {
-          count: 0,
-          lastAttempt: null,
-        };
-        loginAttempts.set(email, {
-          count: userAttempts.count + 1,
-          lastAttempt: Date.now(),
-        });
-
         return res.status(400).json({ message: "Invalid email or password." });
       }
-
-      // Reset login attempts on success
-      loginAttempts.delete(email);
-
-      console.log("✅ Login successful:", email);
 
       const payload = {
         id: user._id,
@@ -203,12 +205,11 @@ router.post(
         expiresIn: "24h",
       });
 
-      res.json({ token, message: "Logged in successfully" });
+      return res.json({ token, message: "✅ Logged in successfully!" });
     } catch (err) {
-      console.error("🚨 Server Error:", err.message);
-      res
+      return res
         .status(500)
-        .json({ message: "Server error. Please try again later." });
+        .json({ message: "🚨 Server error. Please try again later." });
     }
   }
 );

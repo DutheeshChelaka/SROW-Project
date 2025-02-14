@@ -1,46 +1,62 @@
-/* Ensure the content is pushed below a fixed header */
+/* Import premium font */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+
+/* 🌑 Dark Mode & Page Styling */
 body {
-  padding-top: 80px; /* Adjust this value according to your header's height */
-  background-color: #0d0d0d; /* A dark background for a professional look */
+  padding-top: 80px; /* Adjust to match your header */
+  background-color: #0d0d0d;
+  font-family: "Poppins", sans-serif;
+  color: #ffffff;
   margin: 0;
-  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 
+/* 📦 Product Container */
 .products-container {
   margin: 0 auto;
   padding: 20px;
-  margin-top: 100px; /* Ensure there's enough space below the header */
+  margin-top: 100px; /* Ensure enough space below header */
+  text-align: center;
 }
 
-/* 🌟 Professional Product Card Styling */
+/* 🔥 Product Grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  justify-content: center;
+  padding: 30px;
+  margin-top: 20px;
+}
+
+/* 🌟 Professional Product Card */
 .product-card {
-  background: rgba(17, 17, 17, 0.85); /* Glass effect */
-  border-radius: 15px;
-  overflow: hidden;
-  padding: 20px;
-  transition: all 0.4s ease-in-out;
-  cursor: pointer;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 25px;
   text-align: center;
   position: relative;
-  box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 15px rgba(255, 255, 255, 0.15);
+  transition: all 0.4s ease-in-out;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  max-width: 320px; /* Limit the card's maximum width */
-  margin: 0 auto; /* Center the card within its grid cell */
-}
-.product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 6px 20px rgba(255, 255, 255, 0.3);
+  max-width: 320px;
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* 🖼️ Product Image Container */
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 8px 20px rgba(255, 255, 255, 0.3);
+}
+
+/* 🖼️ Product Image */
 .product-image-container {
   width: 100%;
-  max-height: 300px; /* Maximum height to maintain layout */
+  max-height: 320px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,8 +67,8 @@ body {
 
 .product-image {
   width: 100%;
-  height: auto; /* Allow full height of the image */
-  object-fit: contain; /* Show the entire image without cropping */
+  height: auto;
+  object-fit: cover;
   transition: transform 0.3s ease-in-out;
 }
 
@@ -62,27 +78,28 @@ body {
 
 /* 📜 Product Name */
 .product-name {
-  font-size: 1.4rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #f7d716;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 /* 📖 Product Description */
 .product-description {
-  font-size: 1rem;
-  color: #ccc;
+  font-size: 1.1rem;
+  color: #ddd;
   margin: 10px 0;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.5;
+  max-width: 280px;
 }
 
 /* 💰 Product Price */
 .product-price {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #e94560;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 /* 🛍️ Add to Cart Button */
@@ -91,7 +108,7 @@ body {
   color: #000;
   font-size: 1.2rem;
   font-weight: 600;
-  padding: 10px 15px;
+  padding: 12px 18px;
   border: none;
   border-radius: 8px;
   margin-top: 15px;
@@ -101,34 +118,29 @@ body {
 
 .add-to-cart-btn:hover {
   background: linear-gradient(135deg, #f7d716, #cace01) !important;
-  transform: scale(1.05);
+  transform: scale(1.07);
+  box-shadow: 0 0 12px #f7d716;
 }
 
-/* 🏬 Product Grid */
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 320px));
-  gap: 20px;
-  justify-content: center;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-/* 📱 Responsive Improvements */
+/* 📱 Responsive Design */
 @media (max-width: 1024px) {
   .product-card {
-    padding: 15px;
+    padding: 20px;
   }
+
   .product-name {
+    font-size: 1.4rem;
+  }
+
+  .product-price {
     font-size: 1.3rem;
   }
-  .product-price {
-    font-size: 1.2rem;
-  }
+
   .add-to-cart-btn {
-    font-size: 1rem;
-    padding: 8px 12px;
+    font-size: 1.1rem;
+    padding: 10px 16px;
   }
+
   .product-image-container {
     max-height: 250px;
   }
@@ -138,31 +150,43 @@ body {
   .products-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
+
   .product-card {
-    padding: 10px;
+    padding: 15px;
   }
+
   .product-name {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
   }
+
   .product-price {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
+
   .product-image-container {
-    max-height: 200px;
+    max-height: 220px;
   }
 }
 
 @media (max-width: 480px) {
   .products-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: 1fr;
   }
+
   .product-image-container {
-    max-height: 180px;
+    max-height: 200px;
   }
+
   .product-name {
+    font-size: 1.2rem;
+  }
+
+  .product-price {
     font-size: 1rem;
   }
-  .product-price {
-    font-size: 0.9rem;
+
+  .add-to-cart-btn {
+    font-size: 1rem;
+    padding: 10px 15px;
   }
 }
