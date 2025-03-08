@@ -1,0 +1,3 @@
+#this is a simple file that tells docker to ignore certain files when building the image
+node_modules
+package-lock.json
