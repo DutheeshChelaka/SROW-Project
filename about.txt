@@ -1,0 +1,23 @@
+SROW — Clothing E-commerce (MERN + Stripe)
+
+SROW is a full-stack clothing store built for a real client who previously sold on social media. 
+It moves the business to a proper online shop with a clean UI and secure checkout.
+
+What it does
+- Shows products with sizes, colors, price, and multiple images
+- Add to cart, change quantity, see totals, continue shopping
+- Checkout with **Stripe (card)** or **Cash on Delivery (COD)**
+- Login/Signup with **JWT**; users can see their order summary
+- **Real-time order status**: Pending → Accepted → Delivered
+
+Admin
+- Add/edit products, images, sizes, colors
+- Manage categories and types
+- View all orders and update status (Pending/Accepted/Delivered)
+
+Tech
+- MERN stack (MongoDB, Express, React, Node)
+- Stripe Checkout + webhook
+- Basic security: JWT auth, hashed passwords, input validation
+
+This project focuses on real business needs: simple shopping flow, clear admin controls, and secure payments.
