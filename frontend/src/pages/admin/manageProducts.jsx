@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../../styles_pages/manageProducts.css";
+import API_URL from "../../config/api";
+import AdminLayout from "../../components/admin/AdminLayout";
 
 const ManageProducts = () => {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
-    name: "",
-    priceLKR: "",
-    priceJPY: "",
-    description: "",
-    categoryId: "",
-    subcategoryId: "",
-    images: [],
-    sizes: "",
+    name: "", priceLKR: "", priceJPY: "", description: "",
+    categoryId: "", subcategoryId: "", images: [], sizes: "",
   });
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [editingProductId, setEditingProductId] = useState(null); // Track editing state
+  const [editingProductId, setEditingProductId] = useState(null);
   const [error, setError] = useState("");
+  const [showForm, setShowForm] = useState(false);
 
-  // Fetch all categories
   useEffect(() => {
     fetchCategories();
     fetchProducts();
@@ -27,40 +22,26 @@ const ManageProducts = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/catalog/categories"
-      );
+      const res = await axios.get(`${API_URL}/api/catalog/categories`);
       setCategories(res.data);
-    } catch (err) {
-      setError("Error fetching categories.");
-      console.error("Fetch Categories Error:", err);
-    }
+    } catch (err) { setError("Error fetching categories."); }
   };
 
   const fetchSubcategories = async (categoryId) => {
     if (!categoryId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:5000/api/catalog/subcategories/${categoryId}`
-      );
+      const res = await axios.get(`${API_URL}/api/catalog/subcategories/${categoryId}`);
       setSubcategories(res.data);
-    } catch (err) {
-      setError("Error fetching subcategories.");
-      console.error("Fetch Subcategories Error:", err);
-    }
+    } catch (err) { setError("Error fetching subcategories."); }
   };
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/catalog/products");
+      const res = await axios.get(`${API_URL}/api/catalog/products`);
       setProducts(res.data);
-    } catch (err) {
-      setError("Error fetching products.");
-      console.error("Fetch Products Error:", err);
-    }
+    } catch (err) { setError("Error fetching products."); }
   };
 
-  // Handle form submission (Create or Update)
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
@@ -70,234 +51,241 @@ const ManageProducts = () => {
       formData.append("description", form.description);
       formData.append("categoryId", form.categoryId);
       formData.append("subcategoryId", form.subcategoryId);
-      formData.append(
-        "sizes",
-        JSON.stringify(form.sizes.split(",").map((size) => size.trim()))
-      );
-
-      // Append all selected images to formData
+      formData.append("sizes", JSON.stringify(form.sizes.split(",").map((s) => s.trim())));
       for (let i = 0; i < form.images.length; i++) {
         formData.append("images", form.images[i]);
       }
 
       if (editingProductId) {
-        // Update product
-        await axios.put(
-          `http://localhost:5000/api/catalog/products/${editingProductId}`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${localStorage.getItem("token")}`, // Add your token here
-            },
-          }
-        );
-
-        setProducts(
-          products.map((product) =>
-            product._id === editingProductId ? { ...product, ...form } : product
-          )
-        );
-        setEditingProductId(null);
+        await axios.put(`${API_URL}/api/catalog/products/${editingProductId}`, formData, {
+          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
       } else {
-        // Create new product
-        const res = await axios.post(
-          "http://localhost:5000/api/catalog/products",
-          formData,
-          {
-            headers: { "Content-Type": "multipart/form-data" },
-          }
-        );
-        setProducts([...products, res.data.product]);
+        await axios.post(`${API_URL}/api/catalog/products`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       }
 
       resetForm();
+      fetchProducts();
     } catch (err) {
       setError("Error saving product.");
       console.error("Save Product Error:", err);
     }
   };
 
-  // Load product details into form for editing
   const handleEdit = (product) => {
     setForm({
-      name: product.name,
-      priceLKR: product.priceLKR,
-      priceJPY: product.priceJPY,
-      description: product.description,
-      categoryId: product.categoryId,
-      subcategoryId: product.subcategoryId,
-      sizes: product.sizes.join(", "),
-      images: [],
+      name: product.name, priceLKR: product.priceLKR, priceJPY: product.priceJPY,
+      description: product.description, categoryId: product.categoryId,
+      subcategoryId: product.subcategoryId, sizes: product.sizes.join(", "), images: [],
     });
-
     setEditingProductId(product._id);
     fetchSubcategories(product.categoryId);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Delete a product
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
-
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      const token = localStorage.getItem("token"); // Ensure token is stored
-      if (!token) {
-        console.error("No token found. User might not be logged in.");
-        return;
-      }
-
-      await axios.delete(
-        `http://localhost:5000/api/catalog/products/${productId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Send the token
-          },
-        }
-      );
-
-      setProducts(products.filter((product) => product._id !== productId));
+      await axios.delete(`${API_URL}/api/catalog/products/${productId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setProducts(products.filter((p) => p._id !== productId));
     } catch (error) {
-      console.error("❌ Delete Product Error:", error.response?.data || error);
-      alert(error.response?.data?.message || "Failed to delete product");
+      console.error("Delete Product Error:", error);
+      alert("Failed to delete product");
     }
   };
 
-  // Reset form
   const resetForm = () => {
-    setForm({
-      name: "",
-      priceLKR: "",
-      priceJPY: "",
-      description: "",
-      categoryId: "",
-      subcategoryId: "",
-      sizes: "",
-      images: [],
-    });
+    setForm({ name: "", priceLKR: "", priceJPY: "", description: "", categoryId: "", subcategoryId: "", sizes: "", images: [] });
     setEditingProductId(null);
     setSubcategories([]);
+    setShowForm(false);
+    setError("");
   };
 
+  const inputClass = "w-full border border-brand-border px-4 py-2.5 font-body text-sm text-brand-text placeholder-brand-muted focus:outline-none focus:border-brand-black transition-colors";
+  const labelClass = "block font-body text-xs font-semibold tracking-[0.15em] uppercase text-brand-text mb-2";
+
   return (
-    <div className="manage-products-container">
-      <h1>{editingProductId ? "Edit Product" : "Manage Products"}</h1>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <AdminLayout>
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="font-heading text-2xl font-semibold text-brand-black">
+            {editingProductId ? "Edit Product" : "Manage Products"}
+          </h1>
+          {!showForm && (
+            <button onClick={() => setShowForm(true)} className="btn-primary">
+              + Add Product
+            </button>
+          )}
+        </div>
 
-      {/* Product Form */}
-      <form className="product-form">
-        <input
-          type="text"
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
-        <input
-          type="text"
-          placeholder="Available Sizes (comma-separated, e.g., S,M,L)"
-          value={form.sizes}
-          onChange={(e) => setForm({ ...form, sizes: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Price in LKR"
-          value={form.priceLKR}
-          onChange={(e) => setForm({ ...form, priceLKR: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Price in JPY"
-          value={form.priceJPY}
-          onChange={(e) => setForm({ ...form, priceJPY: e.target.value })}
-        />
-        <textarea
-          placeholder="Description"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-
-        {/* Category Selection */}
-        <select
-          value={form.categoryId || ""}
-          onChange={(e) => {
-            setForm({ ...form, categoryId: e.target.value, subcategoryId: "" });
-            fetchSubcategories(e.target.value);
-          }}
-        >
-          <option value="">Select Category</option>
-          {categories.map((cat) => (
-            <option key={cat._id} value={cat._id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-
-        {/* Subcategory Selection */}
-        <select
-          value={form.subcategoryId || ""}
-          onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })}
-          disabled={!form.categoryId}
-        >
-          <option value="">Select Subcategory</option>
-          {subcategories.map((sub) => (
-            <option key={sub._id} value={sub._id}>
-              {sub.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="file"
-          multiple
-          onChange={(e) =>
-            setForm({ ...form, images: Array.from(e.target.files) })
-          }
-        />
-        <button type="button" onClick={handleSubmit}>
-          {editingProductId ? "Update Product" : "Add Product"}
-        </button>
-        {editingProductId && (
-          <button type="button" onClick={resetForm}>
-            Cancel Edit
-          </button>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 font-body text-sm">
+            {error}
+          </div>
         )}
-      </form>
 
-      {/* Product List */}
-      <div className="product-list">
-        <h2>Products</h2>
-        {products.map((product) => (
-          <div className="product-card" key={product._id}>
-            <div className="product-images">
-              {product.images.slice(0, 3).map((image, index) => (
-                <img
-                  key={index}
-                  src={`http://localhost:5000/${image}`}
-                  alt={`${product.name} - ${index + 1}`}
-                  className="product-image"
-                />
-              ))}
-              {product.images.length > 3 && (
-                <p>+ {product.images.length - 3} more images</p>
+        {/* Product Form */}
+        {showForm && (
+          <div className="bg-white border border-brand-border p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-body text-sm font-semibold text-brand-text">
+                {editingProductId ? "Update Product" : "New Product"}
+              </h2>
+              <button onClick={resetForm} className="font-body text-xs text-brand-muted hover:text-brand-text transition-colors">
+                Cancel
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="md:col-span-2">
+                <label className={labelClass}>Product Name</label>
+                <input type="text" placeholder="e.g. Classic White Tee" value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputClass} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Price (LKR)</label>
+                <input type="number" placeholder="0.00" value={form.priceLKR}
+                  onChange={(e) => setForm({ ...form, priceLKR: e.target.value })} className={inputClass} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Price (JPY)</label>
+                <input type="number" placeholder="0.00" value={form.priceJPY}
+                  onChange={(e) => setForm({ ...form, priceJPY: e.target.value })} className={inputClass} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Category</label>
+                <select value={form.categoryId || ""}
+                  onChange={(e) => { setForm({ ...form, categoryId: e.target.value, subcategoryId: "" }); fetchSubcategories(e.target.value); }}
+                  className={`${inputClass} bg-white`}>
+                  <option value="">Select Category</option>
+                  {categories.map((cat) => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Subcategory</label>
+                <select value={form.subcategoryId || ""}
+                  onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })}
+                  disabled={!form.categoryId}
+                  className={`${inputClass} bg-white ${!form.categoryId ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  <option value="">Select Subcategory</option>
+                  {subcategories.map((sub) => (
+                    <option key={sub._id} value={sub._id}>{sub.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Sizes (comma separated)</label>
+                <input type="text" placeholder="S, M, L, XL" value={form.sizes}
+                  onChange={(e) => setForm({ ...form, sizes: e.target.value })} className={inputClass} />
+              </div>
+
+              <div>
+                <label className={labelClass}>Images</label>
+                <input type="file" multiple
+                  onChange={(e) => setForm({ ...form, images: Array.from(e.target.files) })}
+                  className="w-full font-body text-sm text-brand-muted file:mr-4 file:py-2 file:px-4 file:border file:border-brand-border file:text-xs file:font-body file:font-medium file:bg-white file:text-brand-text hover:file:bg-brand-surface file:cursor-pointer file:transition-colors" />
+                {form.images.length > 0 && (
+                  <p className="mt-1 font-body text-xs text-brand-muted">{form.images.length} file{form.images.length > 1 ? "s" : ""} selected</p>
+                )}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className={labelClass}>Description</label>
+                <textarea placeholder="Product description..." value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  rows={3} className={`${inputClass} resize-none`} />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button type="button" onClick={handleSubmit} className="btn-primary">
+                {editingProductId ? "Update Product" : "Add Product"}
+              </button>
+              {editingProductId && (
+                <button type="button" onClick={resetForm} className="btn-outline">
+                  Cancel Edit
+                </button>
               )}
             </div>
-            <h3>{product.name}</h3>
-            <p>{product.description}</p>
-            <p>
-              LKR {product.priceLKR.toFixed(2)} / JPY{" "}
-              {product.priceJPY.toFixed(2)}
-            </p>
-            <button onClick={() => handleEdit(product)} className="edit-button">
-              Edit
-            </button>
-            <button onClick={() => handleDeleteProduct(product._id)}>
-              Delete
-            </button>
           </div>
-        ))}
+        )}
+
+        {/* Products List */}
+        <div className="bg-white border border-brand-border">
+          <div className="px-6 py-4 border-b border-brand-border">
+            <h2 className="font-body text-sm font-semibold text-brand-text">
+              All Products ({products.length})
+            </h2>
+          </div>
+
+          {products.length > 0 ? (
+            <div className="divide-y divide-brand-border">
+              {products.map((product) => (
+                <div key={product._id} className="flex items-center gap-4 px-6 py-4 hover:bg-brand-surface/50 transition-colors">
+                  {/* Thumbnail */}
+                  <div className="flex gap-2 flex-shrink-0">
+                    {product.images.slice(0, 2).map((image, index) => (
+                      <div key={index} className="w-14 h-16 bg-brand-surface overflow-hidden">
+                        <img src={`${API_URL}/${image}`} alt={`${product.name}`}
+                          className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-body text-sm font-medium text-brand-text truncate">{product.name}</h3>
+                    <p className="font-body text-xs text-brand-muted mt-0.5 truncate">{product.description}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="font-body text-xs font-medium text-brand-text">
+                        LKR {product.priceLKR?.toFixed(2)}
+                      </span>
+                      <span className="font-body text-xs text-brand-muted">
+                        / JPY {product.priceJPY?.toFixed(2)}
+                      </span>
+                      {product.sizes && (
+                        <span className="font-body text-xs text-brand-muted">
+                          · {product.sizes.join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <button onClick={() => handleEdit(product)}
+                      className="font-body text-xs font-medium text-brand-text underline hover:text-brand-accent transition-colors">
+                      Edit
+                    </button>
+                    <button onClick={() => handleDeleteProduct(product._id)}
+                      className="font-body text-xs text-red-500 hover:text-red-600 transition-colors">
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="px-6 py-12 text-center font-body text-sm text-brand-muted">
+              No products yet. Click "+ Add Product" to get started.
+            </p>
+          )}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
