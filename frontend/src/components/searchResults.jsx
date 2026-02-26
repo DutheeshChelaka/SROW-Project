@@ -28,7 +28,7 @@ const SearchResults = ({ setSearchActive, setIsSearchOpen }) => {
               onClick={() => handleProductClick(product._id)}
             >
               <img
-                src={`http://localhost:5000/${product.images?.[0] || ""}`} // Prevent errors if no image
+                src={`http://localhost:8000/${product.images?.[0] || ""}`} // Prevent errors if no image
                 alt={product.name}
                 className="result-image"
               />

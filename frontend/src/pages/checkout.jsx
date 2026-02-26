@@ -10,90 +10,113 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { CurrencyContext } from "../context/CurrencyContext";
 import axios from "axios";
-import "../styles_pages/checkout.css";
+import API_URL from "../config/api";
 
 const stripePromise = loadStripe(
   "pk_test_51Q3m8rJZW6okBw3PP5TFLjkcEbnUWebpDhdhiTU5kbfSIdqzvApmztcsNfDgPJ34aWHGzqczsmZTkRkPLDjzg0cn00PAegmYD1"
 );
 
-const OrderConfirmationModal = ({
-  isOpen,
-  onConfirm,
-  onCancel,
-  orderDetails,
-}) => {
+/* ===== CONFIRMATION MODAL ===== */
+const OrderConfirmationModal = ({ isOpen, onConfirm, onCancel, orderDetails }) => {
+  if (!isOpen) return null;
+
   return (
-    <div className={`modal-overlay ${isOpen ? "show" : ""}`}>
-      <div className="modal-content">
-        <h2>Confirm Your Order</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onCancel} />
 
-        {/* 📦 Delivery Details */}
-        <div className="confirmation-section">
-          <h3>Delivery Details</h3>
-          <div className="detail-row">
-            <span className="detail-label">Name:</span>
-            <span className="detail-value">{orderDetails.name}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Address:</span>
-            <span className="detail-value">{orderDetails.address}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Contact:</span>
-            <span className="detail-value">{orderDetails.contact}</span>
-          </div>
-        </div>
+      {/* Modal */}
+      <div className="relative bg-white w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          <h2 className="font-heading text-2xl font-semibold text-brand-text mb-6">
+            Confirm Your Order
+          </h2>
 
-        {/* 🛍️ Order Summary */}
-        <div className="confirmation-section">
-          <h3>Order Summary</h3>
-          <div className="order-items">
-            {orderDetails.items.map((item, index) => (
-              <div key={index} className="order-item">
-                <img
-                  src={`http://localhost:5000/${item.images?.[0] || ""}`}
-                  alt={item.name}
-                  className="item-thumbnail"
-                />
-                <div className="item-details">
-                  <p className="item-name">{item.name}</p>
-                  <p>Size: {item.size}</p>
-                  <p>Quantity: {item.quantity}</p>
-                  <p>
+          {/* Delivery Details */}
+          <div className="mb-6">
+            <p className="text-[10px] font-body font-semibold tracking-[0.2em] uppercase text-brand-muted mb-3">
+              Delivery Details
+            </p>
+            <div className="space-y-2 font-body text-sm">
+              <div className="flex justify-between">
+                <span className="text-brand-muted">Name</span>
+                <span className="text-brand-text font-medium">{orderDetails.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-brand-muted">Address</span>
+                <span className="text-brand-text font-medium text-right max-w-[200px]">{orderDetails.address}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-brand-muted">Contact</span>
+                <span className="text-brand-text font-medium">{orderDetails.contact}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-brand-border mb-6" />
+
+          {/* Order Items */}
+          <div className="mb-6">
+            <p className="text-[10px] font-body font-semibold tracking-[0.2em] uppercase text-brand-muted mb-3">
+              Items
+            </p>
+            <div className="space-y-3">
+              {orderDetails.items.map((item, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="w-12 h-14 bg-brand-surface overflow-hidden flex-shrink-0">
+                    <img
+                      src={`${API_URL}/${item.images?.[0] || ""}`}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm font-medium text-brand-text truncate">{item.name}</p>
+                    <p className="font-body text-xs text-brand-muted">
+                      Size: {item.size} · Qty: {item.quantity}
+                    </p>
+                  </div>
+                  <p className="font-body text-sm text-brand-text flex-shrink-0">
                     {orderDetails.currency}{" "}
-                    {orderDetails.currency === "LKR"
-                      ? item.priceLKR
-                      : item.priceJPY}{" "}
-                    × {item.quantity}
+                    {(orderDetails.currency === "LKR" ? item.priceLKR : item.priceJPY) * item.quantity}
                   </p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* 💳 Total Price */}
-          <div className="order-total">
-            <h4>Total Amount</h4>
-            <p>
+          <div className="h-px bg-brand-border mb-6" />
+
+          {/* Total */}
+          <div className="flex justify-between mb-8">
+            <span className="font-body text-base font-semibold text-brand-text">Total</span>
+            <span className="font-body text-base font-semibold text-brand-text">
               {orderDetails.currency} {orderDetails.totalPrice}
-            </p>
+            </span>
           </div>
-        </div>
 
-        {/* 🔘 Action Buttons */}
-        <div className="modal-actions">
-          <button className="confirm-button" onClick={onConfirm}>
-            Confirm Order
-          </button>
-          <button className="cancel-button" onClick={onCancel}>
-            Review Changes
-          </button>
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={onCancel}
+              className="flex-1 btn-outline text-center"
+            >
+              Go Back
+            </button>
+            <button
+              onClick={onConfirm}
+              className="flex-1 btn-primary text-center"
+            >
+              Confirm Order
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
+/* ===== CHECKOUT FORM (Stripe + Place Order) ===== */
 const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -107,13 +130,12 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
       setError("Please fill in all required fields");
       return;
     }
-
+    setError("");
     setShowConfirmation(true);
   };
 
   const handleConfirmOrder = async () => {
     setLoading(true);
-
     try {
       if (formData.paymentMethod === "Card") {
         await processCardPayment();
@@ -130,77 +152,43 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
   };
 
   const processCardPayment = async () => {
-    if (!stripe || !elements) {
-      throw new Error("Stripe has not been initialized");
-    }
+    if (!stripe || !elements) throw new Error("Stripe has not been initialized");
 
-    const amountToCharge =
-      currency === "LKR"
-        ? Math.round(totalPrice * 100)
-        : Math.round(totalPrice);
+    const amountToCharge = currency === "LKR"
+      ? Math.round(totalPrice * 100)
+      : Math.round(totalPrice);
 
     const minAmount = currency === "LKR" ? 50 * 100 : 50;
-
     if (amountToCharge < minAmount) {
-      throw new Error(
-        `Amount too small. Minimum charge is ${currency} ${
-          minAmount / (currency === "LKR" ? 100 : 1)
-        }`
-      );
+      throw new Error(`Amount too small. Minimum charge is ${currency} ${minAmount / (currency === "LKR" ? 100 : 1)}`);
     }
 
-    try {
-      // Create a payment intent
-      const { data } = await axios.post(
-        "http://localhost:5000/api/stripe/create-payment-intent",
-        {
-          amount: amountToCharge,
-          currency: currency.toLowerCase(),
-        }
-      );
+    const { data } = await axios.post(`${API_URL}/api/stripe/create-payment-intent`, {
+      amount: amountToCharge,
+      currency: currency.toLowerCase(),
+    });
 
-      console.log("✅ Received Client Secret:", data.clientSecret);
-      console.log("🔹 Payment Intent ID:", data.id); // Log Payment Intent ID
+    if (!data.clientSecret) throw new Error("Failed to get client secret from Stripe.");
 
-      if (!data.clientSecret) {
-        throw new Error("Failed to get client secret from Stripe.");
-      }
-
-      const cardElement = elements.getElement(CardElement);
-
-      console.log("🔹 Confirming Payment Intent with ID:", data.id);
-
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        data.clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: formData.name,
-              email: user?.email || "guest@example.com",
-              phone: formData.contact,
-              address: {
-                line1: formData.address,
-                postal_code: formData.postalCode?.trim() || "10000",
-                country: currency === "JPY" ? "JP" : "LK",
-              },
-            },
+    const cardElement = elements.getElement(CardElement);
+    const { error, paymentIntent } = await stripe.confirmCardPayment(data.clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: {
+          name: formData.name,
+          email: user?.email || "guest@example.com",
+          phone: formData.contact,
+          address: {
+            line1: formData.address,
+            postal_code: formData.postalCode?.trim() || "10000",
+            country: currency === "JPY" ? "JP" : "LK",
           },
-        }
-      );
+        },
+      },
+    });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (paymentIntent.status === "succeeded") {
-        console.log("✅ Payment Intent Confirmed:", paymentIntent.id);
-        await saveOrder("card");
-      }
-    } catch (error) {
-      console.error("❌ Error processing order:", error.message);
-      setError(error.message || "Failed to process order. Please try again.");
-    }
+    if (error) throw new Error(error.message);
+    if (paymentIntent.status === "succeeded") await saveOrder("card");
   };
 
   const processCashOnDelivery = async () => {
@@ -209,7 +197,6 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
 
   const saveOrder = async (paymentMethod) => {
     const userId = user?._id || localStorage.getItem("userId");
-
     if (!userId) {
       navigate("/login");
       throw new Error("Please log in to complete your order");
@@ -234,9 +221,10 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
         phone: formData.contact,
         address: formData.address,
       },
-      paymentMethod, // This field must be saved in the order document
+      paymentMethod,
     };
-    await axios.post("http://localhost:5000/api/orders", order, {
+
+    await axios.post(`${API_URL}/api/orders`, order, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
 
@@ -245,54 +233,66 @@ const CheckoutForm = ({ totalPrice, formData, cartItems, currency, user }) => {
   };
 
   return (
-    <div className="checkout-form-container">
-      {error && <div className="error-message">{error}</div>}
+    <div>
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 font-body text-sm">
+          {error}
+        </div>
+      )}
 
       {formData.paymentMethod === "Card" && (
-        <div className="card-details-section">
-          <h3>Card Details</h3>
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": {
-                    color: "#ffffff",
+        <div className="mb-6">
+          <label className="block font-body text-xs font-semibold tracking-[0.15em] uppercase text-brand-text mb-3">
+            Card Details
+          </label>
+          <div className="border border-brand-border p-4 bg-white">
+            <CardElement
+              options={{
+                style: {
+                  base: {
+                    fontSize: "15px",
+                    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+                    color: "#1A1A1A",
+                    "::placeholder": { color: "#737373" },
                   },
+                  invalid: { color: "#DC2626" },
                 },
-                invalid: {
-                  color: "#9e2146",
-                },
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
       )}
 
       <button
-        className="place-order-button"
         onClick={handlePlaceOrder}
         disabled={loading || (formData.paymentMethod === "Card" && !stripe)}
+        className={`w-full py-4 text-sm font-body font-semibold tracking-[0.15em] uppercase transition-all duration-300 ${
+          loading
+            ? "bg-neutral-400 text-white cursor-not-allowed"
+            : "bg-brand-black text-white hover:bg-neutral-800"
+        }`}
       >
-        {loading ? "Processing..." : "Place Order"}
+        {loading ? (
+          <span className="flex items-center justify-center gap-2">
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Processing...
+          </span>
+        ) : (
+          "Place Order"
+        )}
       </button>
 
       <OrderConfirmationModal
         isOpen={showConfirmation}
         onConfirm={handleConfirmOrder}
         onCancel={() => setShowConfirmation(false)}
-        orderDetails={{
-          ...formData,
-          items: cartItems,
-          currency,
-          totalPrice,
-        }}
+        orderDetails={{ ...formData, items: cartItems, currency, totalPrice }}
       />
     </div>
   );
 };
 
+/* ===== MAIN CHECKOUT PAGE ===== */
 const Checkout = () => {
   const { user } = useAuth();
   const { currency } = useContext(CurrencyContext);
@@ -305,16 +305,14 @@ const Checkout = () => {
     paymentMethod: "COD",
   });
 
+  const currencySymbol = currency === "LKR" ? "LKR" : "¥";
+
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
-
     const total = cart.reduce((acc, item) => {
-      const itemPrice =
-        currency === "LKR" ? item.priceLKR ?? 0 : item.priceJPY ?? 0;
-
+      const itemPrice = currency === "LKR" ? item.priceLKR ?? 0 : item.priceJPY ?? 0;
       return acc + itemPrice * item.quantity;
     }, 0);
-
     setCartItems(cart);
     setTotalPrice(total);
   }, [currency]);
@@ -325,84 +323,190 @@ const Checkout = () => {
 
   return (
     <Elements stripe={stripePromise}>
-      <div className="checkout-container">
-        <h1>Checkout</h1>
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-6 py-10">
 
-        {/* ✅ Cart Summary Section */}
-        <div className="cart-summary">
-          <h2>🛒 Review Your Cart</h2>
-          <ul className="cart-items">
-            {cartItems.length === 0 ? (
-              <p>No items in cart.</p>
-            ) : (
-              cartItems.map((item, index) => (
-                <li key={index} className="cart-item">
-                  <img
-                    src={`http://localhost:5000/${item.images?.[0] || ""}`}
-                    alt={item.name}
-                    className="cart-item-image"
-                  />
-                  <div className="cart-item-details">
-                    <p>
-                      <strong>{item.name}</strong> ({item.size})
-                    </p>
-                    <p>Quantity: {item.quantity}</p>
-                    <p>
-                      Price: {currency}{" "}
-                      {currency === "LKR" ? item.priceLKR : item.priceJPY}
-                    </p>
+          {/* Page Header */}
+          <div className="mb-10">
+            <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-brand-muted mb-2">
+              Secure Checkout
+            </p>
+            <h1 className="font-heading text-3xl sm:text-4xl font-medium text-brand-black">
+              Checkout
+            </h1>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-16">
+
+            {/* LEFT: Form */}
+            <div className="lg:col-span-2 space-y-8">
+
+              {/* Customer Details */}
+              <div>
+                <h2 className="font-heading text-xl font-semibold text-brand-text mb-5">
+                  Delivery Information
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-body text-xs font-semibold tracking-[0.15em] uppercase text-brand-text mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Enter your full name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full border border-brand-border px-4 py-3 font-body text-sm text-brand-text
+                                 placeholder-brand-muted focus:outline-none focus:border-brand-black transition-colors"
+                    />
                   </div>
-                </li>
-              ))
-            )}
-          </ul>
-          <h3>
-            Total: {totalPrice} {currency}
-          </h3>
-        </div>
+                  <div>
+                    <label className="block font-body text-xs font-semibold tracking-[0.15em] uppercase text-brand-text mb-2">
+                      Address
+                    </label>
+                    <textarea
+                      name="address"
+                      placeholder="Enter your delivery address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full border border-brand-border px-4 py-3 font-body text-sm text-brand-text
+                                 placeholder-brand-muted focus:outline-none focus:border-brand-black transition-colors resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-body text-xs font-semibold tracking-[0.15em] uppercase text-brand-text mb-2">
+                      Contact Number
+                    </label>
+                    <input
+                      type="text"
+                      name="contact"
+                      placeholder="Enter your phone number"
+                      value={formData.contact}
+                      onChange={handleInputChange}
+                      className="w-full border border-brand-border px-4 py-3 font-body text-sm text-brand-text
+                                 placeholder-brand-muted focus:outline-none focus:border-brand-black transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
 
-        {/* ✅ Customer Details & Payment Section */}
-        <div className="checkout-form">
-          <h2>Customer Details</h2>
-          <input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleInputChange}
-          />
-          <textarea
-            name="address"
-            placeholder="Address"
-            value={formData.address}
-            onChange={handleInputChange}
-          ></textarea>
-          <input
-            type="text"
-            name="contact"
-            placeholder="Contact Number"
-            value={formData.contact}
-            onChange={handleInputChange}
-          />
-          <h2>Payment Method</h2>
-          <select
-            name="paymentMethod"
-            value={formData.paymentMethod}
-            onChange={handleInputChange}
-          >
-            <option value="COD">Cash on Delivery</option>
-            <option value="Card">Card Payment</option>
-          </select>
-        </div>
+              <div className="h-px bg-brand-border" />
 
-        {/* ✅ Checkout Form Component */}
-        <CheckoutForm
-          totalPrice={totalPrice}
-          formData={formData}
-          cartItems={cartItems}
-          currency={currency}
-          user={user}
-        />
+              {/* Payment Method */}
+              <div>
+                <h2 className="font-heading text-xl font-semibold text-brand-text mb-5">
+                  Payment Method
+                </h2>
+                <div className="space-y-3">
+                  {[
+                    { value: "COD", label: "Cash on Delivery", icon: "M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" },
+                    { value: "Card", label: "Credit / Debit Card", icon: "M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" },
+                  ].map((method) => (
+                    <label
+                      key={method.value}
+                      className={`flex items-center gap-4 p-4 border cursor-pointer transition-all duration-200 ${
+                        formData.paymentMethod === method.value
+                          ? "border-brand-black bg-brand-surface"
+                          : "border-brand-border hover:border-neutral-400"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method.value}
+                        checked={formData.paymentMethod === method.value}
+                        onChange={handleInputChange}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        formData.paymentMethod === method.value
+                          ? "border-brand-black"
+                          : "border-brand-border"
+                      }`}>
+                        {formData.paymentMethod === method.value && (
+                          <div className="w-2.5 h-2.5 rounded-full bg-brand-black" />
+                        )}
+                      </div>
+                      <svg className="w-5 h-5 text-brand-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={method.icon} />
+                      </svg>
+                      <span className="font-body text-sm font-medium text-brand-text">{method.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px bg-brand-border" />
+
+              {/* Stripe / Place Order */}
+              <CheckoutForm
+                totalPrice={totalPrice}
+                formData={formData}
+                cartItems={cartItems}
+                currency={currency}
+                user={user}
+              />
+            </div>
+
+            {/* RIGHT: Order Summary */}
+            <div className="lg:col-span-1">
+              <div className="bg-brand-surface p-8 sticky top-40">
+                <h2 className="font-heading text-xl font-semibold text-brand-text mb-6">
+                  Order Summary
+                </h2>
+
+                {/* Cart Items */}
+                <div className="space-y-4 mb-6">
+                  {cartItems.map((item, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-14 h-16 bg-white overflow-hidden flex-shrink-0">
+                        <img
+                          src={`${API_URL}/${item.images?.[0] || ""}`}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-sm font-medium text-brand-text truncate">{item.name}</p>
+                        <p className="font-body text-xs text-brand-muted">
+                          {item.size} · Qty {item.quantity}
+                        </p>
+                      </div>
+                      <p className="font-body text-sm text-brand-text flex-shrink-0">
+                        {currencySymbol}{" "}
+                        {((currency === "LKR" ? item.priceLKR : item.priceJPY) * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="h-px bg-brand-border mb-4" />
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between font-body text-sm">
+                    <span className="text-brand-muted">Subtotal</span>
+                    <span className="text-brand-text">{currencySymbol} {totalPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-body text-sm">
+                    <span className="text-brand-muted">Shipping</span>
+                    <span className="text-brand-text">Free</span>
+                  </div>
+                </div>
+
+                <div className="h-px bg-brand-border mb-4" />
+
+                <div className="flex justify-between">
+                  <span className="font-body text-base font-semibold text-brand-text">Total</span>
+                  <span className="font-body text-base font-semibold text-brand-text">
+                    {currencySymbol} {totalPrice.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </Elements>
   );
