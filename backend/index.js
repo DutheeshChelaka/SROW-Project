@@ -1,46 +1,57 @@
 const express = require("express");
 const connectDB = require("./config/db");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const path = require("path");
 
-const authRoutes = require("./routes/authRoutes"); // Import your authRoutes
-
 const app = express();
-app.use(cors());
+
+// Security & CORS — MUST be before routes
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:3002"],
+  credentials: true,
+}));
 app.use(express.json());
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+});
+app.use("/api", apiLimiter);
 
 // Connect to the database
 connectDB();
 
 // Serve static files from the "uploads" folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 app.use("/public", express.static("public"));
 
 // Routes
-app.use("/api/auth", authRoutes); // Use the authRoutes for `/api/auth` endpoint
-
-// Test route for protected API
+const authRoutes = require("./routes/authRoutes");
+const catalogRoutes = require("./routes/catalogRoutes");
+const orderRoutes = require("./routes/orderRoutes");
+const stripeRoutes = require("./routes/stripeRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
+
+app.use("/api/auth", authRoutes);
+app.use("/api/catalog", catalogRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/stripe", stripeRoutes);
+
 app.get("/api/protected", authMiddleware, (req, res) => {
   res.json({ message: `Welcome user ${req.user.id}` });
 });
 
-// Catalog and Orders Routes and search api
-const catalogRoutes = require("./routes/catalogRoutes");
-app.use("/api/catalog", catalogRoutes);
+const geoRoutes = require("./routes/geoRoutes");
 
-const orderRoutes = require("./routes/orderRoutes");
-app.use("/api/orders", orderRoutes);
-
-const stripeRoutes = require("./routes/stripeRoutes");
-app.use("/api/stripe", stripeRoutes);
+app.use("/api/geo", geoRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, "client/build")));
-
-// Catch-all route to serve React's index.html for unmatched routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
@@ -48,15 +59,3 @@ app.get("*", (req, res) => {
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// Rate limiting
-const rateLimit = require("express-rate-limit");
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-});
-app.use("/api", apiLimiter);
-
-// Helmet
-const helmet = require("helmet");
-app.use(helmet());
