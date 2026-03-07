@@ -10,156 +10,67 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
+  const [scrollY, setScrollY] = useState(0);
   const navigate = useNavigate();
-  const { currency } = useContext(CurrencyContext); // Removed formatPrice dependency
+  const { currency } = useContext(CurrencyContext);
   const productsRef = useRef(null);
-  const heroRef = useRef(null);
 
-  // Helper function to format price (since formatPrice might not exist in context)
+  // Parallax scroll tracking
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const formatPrice = useCallback((product) => {
-    try {
-      if (!product) return `${currency} 0`;
-      
-      const price = currency === "LKR" ? product.priceLKR : product.priceJPY;
-      
-      // Format with thousand separators
-      if (currency === "LKR") {
-        return `LKR ${Number(price).toLocaleString('en-LK')}`;
-      } else {
-        return `¥ ${Number(price).toLocaleString('ja-JP')}`;
-      }
-    } catch (error) {
-      console.error("Error formatting price:", error);
-      return `${currency} ${product?.priceLKR || product?.priceJPY || 0}`;
-    }
+    if (!product) return `${currency} 0`;
+    const price = currency === "LKR" ? product.priceLKR : product.priceJPY;
+    return currency === "LKR"
+      ? `LKR ${Number(price).toLocaleString("en-LK")}`
+      : `¥ ${Number(price).toLocaleString("ja-JP")}`;
   }, [currency]);
 
-  // Fetch categories and products
   useEffect(() => {
     const fetchCategoriesAndProducts = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const categoriesResponse = await axios.get(
-          `${API_URL}/api/catalog/categories`
-        );
-        const categories = categoriesResponse.data;
-
-        // Fetch products for each category with better error handling
+        const catRes = await axios.get(`${API_URL}/api/catalog/categories`);
         const categoryProducts = await Promise.all(
-          categories.map(async (category) => {
+          catRes.data.map(async (category) => {
             try {
-              const productsResponse = await axios.get(
-                `${API_URL}/api/catalog/products-by-category/${category._id}?limit=8`
-              );
-              return { [category.name]: productsResponse.data };
-            } catch (error) {
-              console.error(`Error fetching products for ${category.name}:`, error);
-              return { [category.name]: [] };
-            }
+              const prodRes = await axios.get(`${API_URL}/api/catalog/products-by-category/${category._id}?limit=8`);
+              return { [category.name]: prodRes.data };
+            } catch { return { [category.name]: [] }; }
           })
         );
-
-        const mergedProducts = Object.assign({}, ...categoryProducts);
-        setProductsByCategory(mergedProducts);
-      } catch (error) {
-        console.error("Error fetching categories and products:", error);
-        setError("Failed to load products. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
+        setProductsByCategory(Object.assign({}, ...categoryProducts));
+      } catch (err) {
+        console.error("Error:", err);
+        setError("Failed to load products. Please try again.");
+      } finally { setLoading(false); }
     };
-
     fetchCategoriesAndProducts();
   }, []);
 
   const scrollToProducts = useCallback(() => {
-    if (productsRef.current) {
-      productsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleProductClick = useCallback((productId) => {
-    navigate(`/products/details/${productId}`);
-  }, [navigate]);
-
-  const handleImageError = useCallback((productId) => {
-    setImageErrors(prev => ({ ...prev, [productId]: true }));
-  }, []);
-
-  const handleMouseEnter = useCallback((productId) => {
-    setHoveredProduct(productId);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setHoveredProduct(null);
-  }, []);
-
-  // Get image URL with fallback
   const getImageUrl = useCallback((product) => {
-    try {
-      if (!product?.images?.[0] || imageErrors[product._id]) {
-        return '/api/placeholder/400/500'; // Make sure to have a placeholder image
-      }
-      return `${API_URL}/${product.images[0]}`;
-    } catch (error) {
-      return '/api/placeholder/400/500';
-    }
+    if (!product?.images?.[0] || imageErrors[product._id]) return null;
+    return `${API_URL}/${product.images[0]}`;
   }, [imageErrors]);
 
-  // Memoized features data
-  const features = useMemo(() => [
-    {
-      title: "Premium Quality",
-      desc: "Handpicked items made from the finest materials.",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-        </svg>
-      ),
-      gradient: "from-amber-500 to-orange-500",
-    },
-    {
-      title: "Express Shipping",
-      desc: "Swift and reliable delivery to your doorstep.",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-        </svg>
-      ),
-      gradient: "from-blue-500 to-cyan-500",
-    },
-    {
-      title: "24/7 Support",
-      desc: "We're here to help you anytime, anywhere.",
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-            d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-        </svg>
-      ),
-      gradient: "from-purple-500 to-pink-500",
-    },
-  ], []);
-
-  // Error state
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
-          <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg className="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
           </svg>
-          <p className="text-lg font-body text-brand-muted mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-6 py-3 bg-brand-black text-white rounded-full font-body text-sm font-medium hover:bg-brand-accent transition-colors"
-          >
-            Try Again
-          </button>
+          <p className="font-body text-brand-muted mb-6">{error}</p>
+          <button onClick={() => window.location.reload()} className="btn-primary">Try Again</button>
         </div>
       </div>
     );
@@ -167,120 +78,175 @@ const HomePage = () => {
 
   return (
     <div className="bg-white">
-      {/* ===== HERO SECTION ===== */}
-      <section 
-        ref={heroRef}
-        className="relative bg-gradient-to-r from-brand-black to-gray-900 overflow-hidden"
-      >
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white opacity-5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+
+      {/* ═══════════════════════════════════════════
+          HERO SECTION — Full-screen cinematic
+      ═══════════════════════════════════════════ */}
+      <section className="relative min-h-[85vh] sm:min-h-[90vh] bg-brand-black overflow-hidden flex items-center">
+        {/* Parallax background layers */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-brand-black via-neutral-900 to-brand-black" />
+          <div
+            className="absolute -top-20 -right-20 w-[500px] h-[500px] border border-white/[0.03] rounded-full"
+            style={{ transform: `translateY(${scrollY * 0.1}px)` }}
+          />
+          <div
+            className="absolute -top-10 -right-10 w-[500px] h-[500px] border border-white/[0.03] rounded-full"
+            style={{ transform: `translateY(${scrollY * 0.15}px)` }}
+          />
+          <div
+            className="absolute -bottom-32 -left-32 w-[600px] h-[600px] border border-white/[0.03] rounded-full"
+            style={{ transform: `translateY(${scrollY * -0.08}px)` }}
+          />
+          <div
+            className="absolute -bottom-20 -left-20 w-[600px] h-[600px] border border-white/[0.03] rounded-full"
+            style={{ transform: `translateY(${scrollY * -0.12}px)` }}
+          />
+          {/* Accent glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-brand-accent/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 py-24 sm:py-32 lg:py-40 text-center">
-          <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-white/70 mb-6 animate-fade-in">
-            New Season Collection
-          </p>
-          <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl font-medium text-white leading-tight mb-6 animate-slide-up">
-            Discover the Best
-            <br />
-            <span className="italic bg-gradient-to-r from-yellow-200 to-pink-200 bg-clip-text text-transparent">
-              in Fashion
-            </span>
-          </h1>
-          <p className="font-body text-base sm:text-lg text-white/80 max-w-md mx-auto mb-10 animate-slide-up">
-            Luxury, style, and comfort — all in one place. Experience the finest collection curated just for you.
-          </p>
-          
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
-            <button
-              onClick={scrollToProducts}
-              className="group relative px-8 py-4 bg-white text-brand-black rounded-full font-body text-sm font-medium hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              Shop Now
-            </button>
-            
-            <button
-              onClick={() => navigate('/collections')}
-              className="px-8 py-4 border-2 border-white/30 text-white rounded-full font-body text-sm font-medium hover:bg-white/10 hover:border-white/50 transition-all duration-300"
-            >
-              View Collections
-            </button>
-          </div>
-        </div>
-      </section>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+          <div className="max-w-3xl">
+            {/* Eyebrow */}
+            <div className="flex items-center gap-3 mb-8 animate-fade-in">
+              <div className="w-8 h-px bg-brand-accent" />
+              <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-brand-accent">
+                New Season 2025
+              </p>
+            </div>
 
-      {/* ===== FEATURES SECTION ===== */}
-      <section className="border-b border-brand-border bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-brand-border">
-            {features.map((feature, index) => (
-              <div 
-                key={index} 
-                className="group px-8 py-10 text-center hover:bg-gray-50 transition-all duration-300 cursor-default"
+            {/* Main Heading */}
+            <h1 className="font-heading text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-medium text-white leading-[0.95] mb-8 animate-slide-up">
+              Redefine
+              <br />
+              Your <span className="italic text-brand-accent">Style</span>
+            </h1>
+
+            {/* Subtitle */}
+            <p className="font-body text-base sm:text-lg text-neutral-400 max-w-md mb-12 leading-relaxed animate-slide-up">
+              Curated fashion for the modern individual. Premium quality, timeless design, delivered to your door.
+            </p>
+
+            {/* CTA Row */}
+            <div className="flex flex-wrap items-center gap-4 animate-slide-up">
+              <button
+                onClick={scrollToProducts}
+                className="group px-8 py-4 bg-white text-brand-black font-body text-sm font-semibold tracking-[0.1em] uppercase
+                           hover:bg-brand-accent hover:text-white transition-all duration-300"
               >
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r ${feature.gradient} text-white mb-4 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
-                  {feature.icon}
+                <span className="flex items-center gap-2">
+                  Shop Now
+                  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </span>
+              </button>
+              <button
+                onClick={() => navigate("/about")}
+                className="px-8 py-4 border border-white/20 text-white font-body text-sm font-medium tracking-[0.1em] uppercase
+                           hover:border-white/50 hover:bg-white/5 transition-all duration-300"
+              >
+                Our Story
+              </button>
+            </div>
+
+            {/* Stats Row */}
+            <div className="flex items-center gap-8 sm:gap-12 mt-16 pt-8 border-t border-white/10 animate-fade-in">
+              {[
+                { number: "2.5K+", label: "Happy Customers" },
+                { number: "500+", label: "Products" },
+                { number: "4.9", label: "Average Rating" },
+              ].map((stat, i) => (
+                <div key={i}>
+                  <p className="font-heading text-2xl sm:text-3xl font-semibold text-white">{stat.number}</p>
+                  <p className="font-body text-[11px] text-neutral-500 tracking-wider uppercase mt-1">{stat.label}</p>
                 </div>
-                <h3 className="font-heading text-xl font-semibold text-brand-text mb-2">
-                  {feature.title}
-                </h3>
-                <p className="font-body text-sm text-brand-muted leading-relaxed">
-                  {feature.desc}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
+          <span className="font-body text-[10px] text-neutral-600 tracking-widest uppercase">Scroll</span>
+          <svg className="w-4 h-4 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+          </svg>
         </div>
       </section>
 
-      {/* ===== PRODUCTS BY CATEGORY ===== */}
-      <section ref={productsRef} className="py-16 sm:py-20 lg:py-24 bg-white">
+      {/* ═══════════════════════════════════════════
+          MARQUEE TRUST BAR
+      ═══════════════════════════════════════════ */}
+      <section className="border-b border-brand-border py-5 overflow-hidden bg-brand-surface">
+        <div className="flex items-center justify-center gap-12 sm:gap-20">
+          {[
+            { icon: "M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z", text: "Premium Quality" },
+            { icon: "M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25m-2.25 0V6.75", text: "Free Shipping" },
+            { icon: "M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z", text: "Secure Checkout" },
+            { icon: "M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z", text: "Authentic Products" },
+            { icon: "M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3", text: "Easy Returns" },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-2 flex-shrink-0">
+              <svg className="w-4 h-4 text-brand-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+              </svg>
+              <span className="font-body text-[11px] font-medium tracking-[0.1em] uppercase text-brand-muted whitespace-nowrap">
+                {item.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          PRODUCTS BY CATEGORY
+      ═══════════════════════════════════════════ */}
+      <section ref={productsRef} className="py-20 sm:py-24 lg:py-28 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           {/* Section Header */}
-          <div className="text-center mb-14">
-            <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-brand-muted mb-3">
-              Curated For You
-            </p>
+          <div className="text-center mb-16">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="w-8 h-px bg-brand-accent" />
+              <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-brand-accent">
+                Curated For You
+              </p>
+              <div className="w-8 h-px bg-brand-accent" />
+            </div>
             <h2 className="font-heading text-4xl sm:text-5xl font-medium text-brand-black mb-4">
               Shop by Category
             </h2>
-            <p className="font-body text-brand-muted max-w-2xl mx-auto">
-              Explore our carefully curated collection of premium products, 
-              handpicked to bring you the best in fashion and style.
+            <p className="font-body text-sm text-brand-muted max-w-lg mx-auto">
+              Explore our carefully curated collection of premium products, handpicked for quality and style.
             </p>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-brand-border border-t-brand-black rounded-full animate-spin"></div>
-              </div>
+            <div className="flex items-center justify-center py-24">
+              <div className="w-12 h-12 border-2 border-brand-border border-t-brand-black rounded-full animate-spin" />
             </div>
           ) : Object.keys(productsByCategory).length > 0 ? (
             Object.entries(productsByCategory).map(([categoryName, products]) => (
               <div key={categoryName} className="mb-20 last:mb-0">
                 {/* Category Header */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <h3 className="font-heading text-2xl sm:text-3xl font-medium text-brand-text">
+                <div className="flex items-end justify-between mb-8 pb-4 border-b border-brand-border">
+                  <div>
+                    <h3 className="font-heading text-2xl sm:text-3xl font-medium text-brand-black">
                       {categoryName}
                     </h3>
-                    <span className="px-3 py-1 bg-gray-100 text-brand-muted rounded-full text-xs font-body">
-                      {products.length} items
-                    </span>
+                    <p className="font-body text-xs text-brand-muted mt-1">
+                      {products.length} product{products.length !== 1 ? "s" : ""}
+                    </p>
                   </div>
-                  
                   {products.length > 0 && (
                     <button
                       onClick={() => navigate(`/category/${categoryName}`)}
-                      className="group flex items-center gap-2 text-sm font-body text-brand-muted hover:text-brand-accent transition-colors"
+                      className="group flex items-center gap-1.5 font-body text-xs font-medium tracking-[0.1em] uppercase text-brand-muted hover:text-brand-black transition-colors"
                     >
                       View All
-                      <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                       </svg>
                     </button>
                   )}
@@ -288,76 +254,115 @@ const HomePage = () => {
 
                 {/* Product Grid */}
                 {products.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 sm:gap-x-6 gap-y-10">
                     {products.map((product) => (
                       <div
                         key={product._id}
                         className="group cursor-pointer"
-                        onClick={() => handleProductClick(product._id)}
-                        onMouseEnter={() => handleMouseEnter(product._id)}
-                        onMouseLeave={handleMouseLeave}
+                        onClick={() => navigate(`/products/details/${product._id}`)}
+                        onMouseEnter={() => setHoveredProduct(product._id)}
+                        onMouseLeave={() => setHoveredProduct(null)}
                       >
-                        {/* Product Image Container */}
-                        <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 mb-3 rounded-lg shadow-sm group-hover:shadow-xl transition-all duration-500">
-                          {/* Main Image */}
-                          <img
-                            src={getImageUrl(product)}
-                            alt={product.name || 'Product image'}
-                            loading="lazy"
-                            onError={() => handleImageError(product._id)}
-                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                          />
-                          
-                          {/* Hover Overlay */}
-                          <div className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-opacity duration-300 ${hoveredProduct === product._id ? 'opacity-100' : 'opacity-0'}`}>
-                            <button 
+                        {/* Image */}
+                        <div className="relative aspect-[3/4] overflow-hidden bg-brand-surface mb-3">
+                          {getImageUrl(product) ? (
+                            <img
+                              src={getImageUrl(product)}
+                              alt={product.name}
+                              loading="lazy"
+                              onError={() => setImageErrors((p) => ({ ...p, [product._id]: true }))}
+                              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <svg className="w-10 h-10 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a2.25 2.25 0 002.25-2.25V5.25a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                              </svg>
+                            </div>
+                          )}
+
+                          {/* Quick action overlay */}
+                          <div className={`absolute inset-0 bg-black/20 flex items-end justify-center pb-4 transition-opacity duration-300 ${
+                            hoveredProduct === product._id ? "opacity-100" : "opacity-0"
+                          }`}>
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                // Add to cart functionality
-                                console.log('Add to cart:', product._id);
+                                navigate(`/products/details/${product._id}`);
                               }}
-                              className="p-3 bg-white rounded-full hover:bg-brand-accent hover:text-white transition-colors transform hover:scale-110"
+                              className="px-6 py-2.5 bg-white text-brand-black font-body text-xs font-semibold tracking-[0.1em] uppercase
+                                         hover:bg-brand-black hover:text-white transition-all duration-200"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
+                              Quick View
                             </button>
                           </div>
                         </div>
 
-                        {/* Product Info */}
-                        <div>
-                          <h4 className="font-body text-sm font-medium text-brand-text mb-1 group-hover:text-brand-accent transition-colors line-clamp-2">
-                            {product.name || 'Product Name'}
-                          </h4>
-
-                          {/* Price */}
-                          <p className="font-body text-sm font-semibold text-brand-accent">
-                            {formatPrice(product)}
-                          </p>
-                        </div>
+                        {/* Info */}
+                        <h4 className="font-body text-sm font-medium text-brand-text group-hover:text-brand-accent transition-colors line-clamp-1">
+                          {product.name}
+                        </h4>
+                        <p className="font-body text-sm text-brand-muted mt-0.5">
+                          {formatPrice(product)}
+                        </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 bg-gray-50 rounded-lg">
-                    <p className="text-sm font-body text-brand-muted">
-                      No products available in this category.
-                    </p>
+                  <div className="text-center py-16 bg-brand-surface">
+                    <p className="font-body text-sm text-brand-muted">No products in this category yet.</p>
                   </div>
                 )}
               </div>
             ))
           ) : (
-            <div className="text-center py-16">
-              <svg className="w-16 h-16 text-brand-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            <div className="text-center py-24">
+              <svg className="w-16 h-16 text-brand-border mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
               </svg>
-              <p className="font-body text-brand-muted">
-                No products available at the moment.
-              </p>
+              <h3 className="font-heading text-xl font-medium text-brand-text mb-2">No products yet</h3>
+              <p className="font-body text-sm text-brand-muted">Check back soon for new arrivals.</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════
+          CTA BANNER
+      ═══════════════════════════════════════════ */}
+      <section className="bg-brand-black py-20 sm:py-24 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 border border-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 border border-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+        </div>
+
+        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+          <p className="text-[11px] font-body font-semibold tracking-[0.3em] uppercase text-brand-accent mb-4">
+            Stay Connected
+          </p>
+          <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-medium text-white mb-4">
+            Join the SROW Community
+          </h2>
+          <p className="font-body text-sm text-neutral-400 mb-10 max-w-md mx-auto">
+            Subscribe for exclusive drops, early access to new collections, and members-only offers.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <input
+              type="email"
+              placeholder="Enter your email"
+              className="flex-1 bg-transparent border border-white/20 px-5 py-3.5 text-sm text-white placeholder-neutral-500
+                         focus:outline-none focus:border-brand-accent font-body transition-colors"
+            />
+            <button className="px-8 py-3.5 bg-white text-brand-black font-body text-sm font-semibold tracking-[0.1em] uppercase
+                               hover:bg-brand-accent hover:text-white transition-all duration-300 whitespace-nowrap">
+              Subscribe
+            </button>
+          </div>
+
+          <p className="font-body text-[11px] text-neutral-600 mt-4">
+            No spam, ever. Unsubscribe anytime.
+          </p>
         </div>
       </section>
     </div>
